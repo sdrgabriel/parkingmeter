@@ -1,7 +1,6 @@
 package com.postech.fiap.parkingmeter.domain.service;
 
 import com.postech.fiap.parkingmeter.domain.model.dto.OwnerDTO;
-import com.postech.fiap.parkingmeter.domain.repository.OwnerRepository;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OwnerService {
 
-  private final OwnerRepository ownerRepository;
+  /*private final OwnerRepository ownerRepository;
   private final ConverterToDTO converterToDTO;
 
   @Transactional(readOnly = true)
   public Page<OwnerDTO> findAll(Pageable pageable) {
     log.info("Find all owners");
     return ownerRepository.findAll(pageable).map(converterToDTO::toDto);
-  }
+  }*/
 }
