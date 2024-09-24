@@ -1,15 +1,17 @@
 package com.postech.fiap.parkingmeter.domain.model.dto.forms;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.HorarioFuncionamento;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Tarifa;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
 
-@Data
-public class ParkingMeterForm {
-
-  @NotNull
-  @NotEmpty
-  @Size(max = 78)
-  private String examples;
-}
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record ParkingMeterForm(
+    @JsonAlias("horario_funcionamento") @Valid @NotNull HorarioFuncionamento horarioFuncionamento,
+    @Valid @NotNull Tarifa tarifa,
+    @JsonAlias("vagas_disponiveis") @Min(value = 1) int vagasDisponiveis,
+    @NotEmpty String cep) {}
