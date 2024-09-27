@@ -35,12 +35,4 @@ public class ParkingMeter {
   @Valid @NotNull private Endereco endereco;
 
   @Version private Long version;
-
-  public ParkingMeter(
-      HorarioFuncionamento horarioFuncionamento,
-      Tarifa tarifa,
-      int vagasDisponiveis,
-      Endereco endereco) {
-    this(null, horarioFuncionamento, tarifa, vagasDisponiveis, endereco, null);
-  }
 }

@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,5 +40,15 @@ public class RestExceptionHandler {
   @ExceptionHandler(ParkingMeterException.class)
   public ResponseEntity<String> parkingMeterException(ParkingMeterException ex) {
     return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<String> httpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
+    return ResponseEntity.status(ex.getStatusCode()).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<String> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The request body is malformed or contains invalid data.");
   }
 }

@@ -12,11 +12,11 @@ import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterExcept
 import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +28,8 @@ import org.springframework.web.client.RestTemplate;
 @ImportAutoConfiguration(TransactionAutoConfiguration.class)
 public class ParkingMeterServiceImpl implements ParkingMeterService {
 
-  private final ParkingMeterRepository parkingMeterRepository;
+  @Autowired private final ParkingMeterRepository parkingMeterRepository;
   private final ConverterToDTO converterToDTO;
-  private final MongoTransactionManager transactionManager;
 
   @Override
   @Transactional(readOnly = true)
@@ -43,13 +42,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   @Transactional(readOnly = true)
   public ParkingMeterDTO getById(String id) {
     log.info("Find one Parking Meter");
-    var parkingMeter =
-        this.parkingMeterRepository
-            .findById(id)
-            .orElseThrow(
-                () ->
-                    new ParkingMeterException(
-                        "Código Parking Meter não existe", HttpStatus.NOT_FOUND));
+    var parkingMeter = this.getParkingMeter(id);
     return converterToDTO.toDto(parkingMeter);
   }
 
@@ -64,6 +57,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   @Transactional
   public ParkingMeterDTO updateById(String id, ParkingMeterForm parkingMeterForm) {
     log.info("Update Parking Meter");
+    this.getParkingMeter(id);
     var update = preencherParkingMeter(id, parkingMeterForm);
     return this.converterToDTO.toDto(this.parkingMeterRepository.save(update));
   }
@@ -82,8 +76,9 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
       String url = "http://viacep.com.br/ws/%s/json".formatted(cep.replace("-", ""));
       return restTemplate.getForObject(url, Endereco.class);
     } catch (Exception e) {
-      throw new RuntimeException(
-          "Erro ao recuperar endereço, favor avaliar cep: %s".formatted(cep));
+      throw new ParkingMeterException(
+          "Error retrieving address, please evaluate zip code: %s".formatted(cep),
+          HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -97,21 +92,33 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
         parkingMeterForm.tarifa(),
         parkingMeterForm.vagasDisponiveis(),
         endereco,
-        null);
+        id != null ? this.getParkingMeter(id).getVersion() : null);
   }
 
   private void validaHorarioFuncionamento(HorarioFuncionamento hr) {
     log.info("Validating Horario Funcionamento");
+    LocalTime inicio;
+    LocalTime fim;
     try {
       String[] slicedHour = hr.inicio().split(":");
-      var inicio = LocalTime.of(Integer.parseInt(slicedHour[0]), Integer.parseInt(slicedHour[1]));
+      inicio = LocalTime.of(Integer.parseInt(slicedHour[0]), Integer.parseInt(slicedHour[1]));
       slicedHour = hr.fim().split(":");
-      var fim = LocalTime.of(Integer.parseInt(slicedHour[0]), Integer.parseInt(slicedHour[1]));
-      if (inicio.isAfter(fim)) {
-        throw new ParkingMeterException("Hora inicial maior que hora final", HttpStatus.BAD_REQUEST);
-      }
+      fim = LocalTime.of(Integer.parseInt(slicedHour[0]), Integer.parseInt(slicedHour[1]));
     } catch (Exception e) {
-      throw new ParkingMeterException(e.getMessage(), HttpStatus.BAD_REQUEST);
+      throw new ParkingMeterException("problem with the HorarioFuncionamento check if it was filled correctly HH:mm", HttpStatus.BAD_REQUEST);
     }
+
+    if (inicio.isAfter(fim)) {
+      throw new ParkingMeterException("Start time greater than end time", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private ParkingMeter getParkingMeter(String id) {
+    return this.parkingMeterRepository
+        .findById(id)
+        .orElseThrow(
+            () ->
+                new ParkingMeterException(
+                    "Parking Meter code does not exist", HttpStatus.NOT_FOUND));
   }
 }
