@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-public class ParkingMeterException extends Exception {
+public class ParkingMeterException extends RuntimeException {
 
   private final HttpStatus status;
 
