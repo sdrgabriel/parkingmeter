@@ -40,6 +40,17 @@
                 <role>Contributor</role>
             </roles>
         </developer>
+        <developer>
+            <id>dev3</id>
+            <name>Edson Silva</name>
+            <email>gabrieljenn.gr@gmail.com</email>
+            <organization>FIAP</organization>
+            <organizationUrl>https://www.fiap.com.br</organizationUrl>
+            <roles>
+                <role>Developer</role>
+                <role>Contributor</role>
+            </roles>
+        </developer>
     </developers>
     <properties>
         <java.version>17</java.version>
