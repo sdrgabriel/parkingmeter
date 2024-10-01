@@ -10,6 +10,10 @@ import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+
+import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +52,21 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
 
   @Override
   public ParkingMeterDTO create(ParkingMeterForm parkingMeterForm) {
-    log.info("Create Parking Meter");
-    var parkingMeter = preencherParkingMeter(null, parkingMeterForm);
-    return converterToDTO.toDto(this.parkingMeterRepository.save(parkingMeter));
+    try {
+      log.info("Create Parking Meter");
+
+      List<ParkingMeter> parkingMetersByCEP =
+          this.parkingMeterRepository.findAllByEndereco_Cep(parkingMeterForm.cep());
+
+      if (!parkingMetersByCEP.isEmpty()) {
+        // exibir erro
+        return  null;
+      }
+      var parkingMeter = preencherParkingMeter(null, parkingMeterForm);
+      return converterToDTO.toDto(this.parkingMeterRepository.save(parkingMeter));
+    } catch (Exception e) {
+      throw new ParkingMeterException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Override
@@ -105,7 +121,9 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
       slicedHour = hr.fim().split(":");
       fim = LocalTime.of(Integer.parseInt(slicedHour[0]), Integer.parseInt(slicedHour[1]));
     } catch (Exception e) {
-      throw new ParkingMeterException("problem with the HorarioFuncionamento check if it was filled correctly HH:mm", HttpStatus.BAD_REQUEST);
+      throw new ParkingMeterException(
+          "problem with the HorarioFuncionamento check if it was filled correctly HH:mm",
+          HttpStatus.BAD_REQUEST);
     }
 
     if (inicio.isAfter(fim)) {

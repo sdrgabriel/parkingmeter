@@ -52,7 +52,6 @@ public class VehicleServiceImpl implements VehicleService {
     Owner owner = Owner.builder().build();
     Vehicle vehicle =
         Vehicle.builder()
-            .id(UUID.randomUUID().toString())
             .color(vehicleForm.color())
             .licensePlate(vehicleForm.licensePlate())
             .model(vehicleForm.model())
