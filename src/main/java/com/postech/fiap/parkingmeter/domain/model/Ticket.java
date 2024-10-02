@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -27,24 +28,29 @@ public class Ticket {
 
   @Valid
   @NotNull
+  @Indexed
   @Field("horario_inicio")
   private LocalDateTime horarioInicio;
 
   @Valid
+  @Indexed
   @Field("horario_fim")
   private LocalDateTime horarioFim;
 
   @Valid
   @NotNull
+  @Indexed
   @Field("status_pagamento")
   private StatusPagamento statusPagamento;
 
   @Valid
   @NotNull
+  @Indexed
   private ParkingMeter parquimetro;
 
   @Valid
   @NotNull
+  @Indexed
   private Vehicle veiculo;
 
   public enum StatusPagamento {

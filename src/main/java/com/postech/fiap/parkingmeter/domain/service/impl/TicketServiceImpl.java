@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -78,13 +80,29 @@ public class TicketServiceImpl implements TicketService {
       }
       ParkingMeter parkingMeter = buildParkingMeter(parkingMeterDTO);
 
+      Optional<Ticket> pendingTicketByVehicleId =
+          this.ticketRepository.findPendingTicketByVehicleId(ticketForm.vehicle_id());
+      if (pendingTicketByVehicleId != null && pendingTicketByVehicleId.isPresent()) {
+        throw new TicketException(
+            "O veículo já está estacionado em um parquímetro", HttpStatus.BAD_REQUEST);
+      }
+
+      List<Ticket> pendingTicketsByParkingMeterId =
+          this.ticketRepository.findPendingTicketsByParkingMeterId(ticketForm.parking_meter_id());
+
+      long pendingTicketCount = pendingTicketsByParkingMeterId.size();
+
+      if (pendingTicketCount >= parkingMeter.getVagasDisponiveis()) {
+        throw new TicketException(
+            "Este parquímetro não tem vagas disponíveis", HttpStatus.BAD_REQUEST);
+      }
+
       Ticket ticket = buildTicket(vehicle, parkingMeter);
       Ticket createdTicket = this.ticketRepository.save(ticket);
 
       return converterToDTO.toDto(createdTicket);
     } catch (Exception e) {
-      throw new TicketException(
-          "Não foi possível criar o ticket", HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new TicketException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -127,8 +145,17 @@ public class TicketServiceImpl implements TicketService {
       throw new TicketException("O ticket já foi cancelado", HttpStatus.BAD_REQUEST);
     }
 
+    LocalDateTime hourNow = LocalDateTime.now();
+
+    long minutesDiff = ChronoUnit.MINUTES.between(ticket.getHorarioInicio(), hourNow);
+
+    final int TIME_LIMIT_MINUTES = 5;
+    if (minutesDiff >= TIME_LIMIT_MINUTES) {
+      throw new TicketException(
+          "O ticket não pode ser cancelado, tempo de tolerância atingido", HttpStatus.BAD_REQUEST);
+    }
+
     ticket.setStatusPagamento(Ticket.StatusPagamento.CANCELADO);
-    ticket.setHorarioFim(LocalDateTime.now());
 
     Ticket updatedTicket = this.ticketRepository.save(ticket);
 
@@ -161,15 +188,17 @@ public class TicketServiceImpl implements TicketService {
   private Vehicle buildVehicle(VehicleDTO vehicleDTO) {
     Owner owner = Owner.builder().build(); // TO-DO: Obter dono;
     return Vehicle.builder()
-        .color(vehicleDTO.color())
-        .licensePlate(vehicleDTO.licensePlate())
-        .model(vehicleDTO.model())
+        .id(vehicleDTO.getId())
+        .color(vehicleDTO.getColor())
+        .licensePlate(vehicleDTO.getLicensePlate())
+        .model(vehicleDTO.getModel())
         .owner(owner)
         .build();
   }
 
   private ParkingMeter buildParkingMeter(ParkingMeterDTO parkingMeterDTO) {
     return ParkingMeter.builder()
+        .id(parkingMeterDTO.getId())
         .horarioFuncionamento(parkingMeterDTO.getHorarioFuncionamento())
         .tarifa(parkingMeterDTO.getTarifa())
         .vagasDisponiveis(parkingMeterDTO.getVagasDisponiveis())

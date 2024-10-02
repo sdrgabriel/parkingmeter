@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -25,16 +26,18 @@ public class ParkingMeter {
 
   @Valid
   @NotNull
+  @Indexed
   @Field("horario_funcionamento")
   private HorarioFuncionamento horarioFuncionamento;
 
   @Valid private Tarifa tarifa;
 
   @Min(value = 1)
+  @Indexed
   @Field("vagas_disponiveis")
   private int vagasDisponiveis;
 
-  @Valid @NotNull private Endereco endereco;
+  @Valid @NotNull @Indexed private Endereco endereco;
 
   @Version private Long version;
 }

@@ -4,6 +4,7 @@ import com.postech.fiap.parkingmeter.domain.model.dto.OwnerDTO;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
@@ -14,7 +15,9 @@ public class Owner {
     @Id
     private String id;
     private String nome;
+    @Indexed(unique = true)
     private String cpf;
+    @Indexed(unique = true)
     private String email;
     private String telefone;
     private Endereco endereco;
