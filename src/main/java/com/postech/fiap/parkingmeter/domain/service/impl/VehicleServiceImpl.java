@@ -8,7 +8,6 @@ import com.postech.fiap.parkingmeter.domain.repository.VehicleRepository;
 import com.postech.fiap.parkingmeter.domain.service.VehicleService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -83,4 +82,5 @@ public class VehicleServiceImpl implements VehicleService {
     log.info("Delete vehicle");
     vehicleRepository.deleteById(id);
   }
+
 }

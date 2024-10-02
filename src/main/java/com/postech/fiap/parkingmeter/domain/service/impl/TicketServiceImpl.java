@@ -4,9 +4,7 @@ import com.postech.fiap.parkingmeter.domain.model.Owner;
 import com.postech.fiap.parkingmeter.domain.model.ParkingMeter;
 import com.postech.fiap.parkingmeter.domain.model.Ticket;
 import com.postech.fiap.parkingmeter.domain.model.Vehicle;
-import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.TicketDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.VehicleDTO;
+import com.postech.fiap.parkingmeter.domain.model.dto.*;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.TicketForm;
 import com.postech.fiap.parkingmeter.domain.repository.TicketRepository;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
@@ -16,26 +14,28 @@ import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-
 @Service
 @AllArgsConstructor
 @Slf4j
 @ImportAutoConfiguration(TransactionAutoConfiguration.class)
+@Transactional
 public class TicketServiceImpl implements TicketService {
   @Autowired private final TicketRepository ticketRepository;
 
@@ -45,6 +45,7 @@ public class TicketServiceImpl implements TicketService {
   private final ConverterToDTO converterToDTO;
 
   @Override
+  @Transactional(readOnly = true)
   public Page<TicketDTO> findAll(Pageable pageable) {
     log.info("Find all tickets");
     return this.ticketRepository.findAll(pageable).map(this.converterToDTO::toDto);
@@ -106,6 +107,7 @@ public class TicketServiceImpl implements TicketService {
     }
   }
 
+  @Override
   public TicketDTO updatePayment(String id) throws TicketException {
     Ticket ticket =
         this.ticketRepository
@@ -135,6 +137,7 @@ public class TicketServiceImpl implements TicketService {
     return converterToDTO.toDto(updatedTicket);
   }
 
+  @Override
   public TicketDTO cancelTicket(String id) throws TicketException {
     Ticket ticket =
         this.ticketRepository
@@ -166,6 +169,53 @@ public class TicketServiceImpl implements TicketService {
   public void deleteById(String id) {
     log.info("Delete ticket by id: {}", id);
     this.ticketRepository.deleteById(id);
+  }
+
+  @Override
+  @Cacheable(value = "totalGastoVeiculo", key = "#licensePlate")
+  @Transactional(readOnly = true)
+  public VehicleSpentDTO obterTotalGastoPorVeiculo(String licensePlate) throws VehicleException {
+    List<Ticket> tickets = ticketRepository.findByVeiculoLicensePlate(licensePlate);
+
+    if (tickets.isEmpty()) {
+      throw new VehicleException(
+          "Nenhum ticket encontrado para o veículo com a placa: " + licensePlate,
+          HttpStatus.NOT_FOUND);
+    }
+
+    return VehicleSpentDTO.builder()
+        .licensePlate(licensePlate)
+        .totalSpent(tickets.stream().mapToDouble(Ticket::getValorTotalCobrado).sum())
+        .build();
+  }
+
+  @Override
+  @Cacheable(
+      value = "ticketsPorIntervaloDeData",
+      key = "#startDate + '-' + #endDate + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+  @Transactional(readOnly = true)
+  public Page<TicketDTO> buscarTicketsPorIntervaloDeData(
+      LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+    return ticketRepository
+        .findByHorarioInicioBetween(startDate, endDate, pageable)
+        .map(converterToDTO::toDto);
+  }
+
+  @Override
+  @Cacheable(
+      value = "ticketsPorStatus",
+      key = "#status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+  @Transactional(readOnly = true)
+  public Page<TicketDTO> buscarTicketsPorStatus(Ticket.StatusPagamento status, Pageable pageable) {
+    return ticketRepository.findByStatusPagamento(status, pageable).map(converterToDTO::toDto);
+  }
+
+  @Override
+  @Cacheable(value = "busyHours", key = "#startDate + '_' + #endDate")
+  @Transactional(readOnly = true)
+  public Page<BusyHoursDTO> buscarHorarioMaisMovimentado(
+      LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    return ticketRepository.buscarHorarioMaisMovimentado(startDate, endDate, pageable);
   }
 
   private double getTotalAmountCharged(

@@ -2,23 +2,23 @@ package com.postech.fiap.parkingmeter.domain.service.impl;
 
 import com.postech.fiap.parkingmeter.domain.model.ParkingMeter;
 import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterDTO;
+import com.postech.fiap.parkingmeter.domain.model.dto.RankedParkingMeterDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Endereco;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.HorarioFuncionamento;
 import com.postech.fiap.parkingmeter.domain.repository.ParkingMeterRepository;
+import com.postech.fiap.parkingmeter.domain.repository.TicketRepository;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
-
-import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,7 +32,8 @@ import org.springframework.web.client.RestTemplate;
 @ImportAutoConfiguration(TransactionAutoConfiguration.class)
 public class ParkingMeterServiceImpl implements ParkingMeterService {
 
-  @Autowired private final ParkingMeterRepository parkingMeterRepository;
+  private final ParkingMeterRepository parkingMeterRepository;
+  private final TicketRepository ticketRepository;
   private final ConverterToDTO converterToDTO;
 
   @Override
@@ -51,6 +52,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   }
 
   @Override
+  @Transactional
   public ParkingMeterDTO create(ParkingMeterForm parkingMeterForm) {
     try {
       log.info("Create Parking Meter");
@@ -60,7 +62,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
 
       if (!parkingMetersByCEP.isEmpty()) {
         // exibir erro
-        return  null;
+        return null;
       }
       var parkingMeter = preencherParkingMeter(null, parkingMeterForm);
       return converterToDTO.toDto(this.parkingMeterRepository.save(parkingMeter));
@@ -79,12 +81,14 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   }
 
   @Override
+  @Transactional
   public void deleteById(String id) {
     log.info("Delete Parking Meter");
     this.parkingMeterRepository.deleteById(id);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public Endereco getEnderecoByCep(String cep) {
     log.info("Get Endereço by cep");
     try {
@@ -96,6 +100,22 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
           "Error retrieving address, please evaluate zip code: %s".formatted(cep),
           HttpStatus.BAD_REQUEST);
     }
+  }
+
+  @Override
+  @Cacheable(value = "rankedParkingMetersByDate", key = "#startDate + '_' + #endDate")
+  @Transactional(readOnly = true)
+  public Page<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorData(
+      LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    return ticketRepository.rankParquimetrosPorArrecadacaoPorData(startDate, endDate, pageable);
+  }
+
+  @Override
+  @Cacheable(value = "rankedParkingMetersByDay", key = "#startDate + '_' + #endDate")
+  @Transactional(readOnly = true)
+  public Page<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorDia(
+      LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    return ticketRepository.rankParquimetrosPorArrecadacaoPorDia(startDate, endDate, pageable);
   }
 
   private ParkingMeter preencherParkingMeter(String id, ParkingMeterForm parkingMeterForm) {

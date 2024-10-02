@@ -1,9 +1,11 @@
 package com.postech.fiap.parkingmeter.presentation.controller;
 
 import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterDTO;
+import com.postech.fiap.parkingmeter.domain.model.dto.RankedParkingMeterDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,5 +51,19 @@ public class ParkingMeterController {
   public ResponseEntity<Void> deleteById(@PathVariable String id) {
     this.parkingMeterService.deleteById(id);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/rank-arrecadacao-por-data")
+  public ResponseEntity<Page<RankedParkingMeterDTO>> rankParquimetrosPorArrecadacaoPorData(
+      @RequestParam LocalDate startDate, @RequestParam LocalDate endDate, Pageable pageable) {
+    return ResponseEntity.ok(
+        parkingMeterService.rankParquimetrosPorArrecadacaoPorData(startDate, endDate, pageable));
+  }
+
+  @GetMapping("/rank-arrecadacao-por-dia")
+  public ResponseEntity<Page<RankedParkingMeterDTO>> rankParquimetrosPorArrecadacaoPorDia(
+      @RequestParam LocalDate startDate, @RequestParam LocalDate endDate, Pageable pageable) {
+    return ResponseEntity.ok(
+        parkingMeterService.rankParquimetrosPorArrecadacaoPorDia(startDate, endDate, pageable));
   }
 }
