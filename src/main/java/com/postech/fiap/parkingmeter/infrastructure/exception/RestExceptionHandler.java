@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -50,5 +52,32 @@ public class RestExceptionHandler {
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<String> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The request body is malformed or contains invalid data.");
+  }
+
+  @ExceptionHandler(VehicleException.class)
+  public ResponseEntity<String> vehicleException(VehicleException ex) {
+    return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(TicketException.class)
+  public ResponseEntity<String> ticketException(TicketException ex) {
+    return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(OwnerException.class)
+  public ResponseEntity<String> ownerException(OwnerException ex) {
+    return ResponseEntity.status(ex.getStatus()).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<String> missingServletRequestParameterException(
+          MissingServletRequestParameterException ex) {
+    return ResponseEntity.status(ex.getStatusCode()).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<String> methodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+    String error = "The value of %s you entered is invalid for the parameter %s.".formatted(ex.getValue(), ex.getName());
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
   }
 }

@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 public interface TicketService {
   Page<TicketDTO> findAll(Pageable pageable);
@@ -32,6 +33,6 @@ public interface TicketService {
 
   Page<TicketDTO> buscarTicketsPorStatus(Ticket.StatusPagamento status, Pageable pageable);
 
-  Page<BusyHoursDTO> buscarHorarioMaisMovimentado(
+  Slice<BusyHoursDTO> buscarHorarioMaisMovimentado(
       LocalDate startDate, LocalDate endDate, Pageable pageable);
 }
