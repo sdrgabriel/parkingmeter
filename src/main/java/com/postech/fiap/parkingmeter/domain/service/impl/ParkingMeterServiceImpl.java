@@ -1,8 +1,8 @@
 package com.postech.fiap.parkingmeter.domain.service.impl;
 
 import com.postech.fiap.parkingmeter.domain.model.ParkingMeter;
-import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.RankedParkingMeterDTO;
+import com.postech.fiap.parkingmeter.domain.model.Ticket;
+import com.postech.fiap.parkingmeter.domain.model.dto.*;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Endereco;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.HorarioFuncionamento;
@@ -12,15 +12,24 @@ import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,9 +41,10 @@ import org.springframework.web.client.RestTemplate;
 @ImportAutoConfiguration(TransactionAutoConfiguration.class)
 public class ParkingMeterServiceImpl implements ParkingMeterService {
 
-  private final ParkingMeterRepository parkingMeterRepository;
-  private final TicketRepository ticketRepository;
+  @Autowired private final ParkingMeterRepository parkingMeterRepository;
+  @Autowired private final TicketRepository ticketRepository;
   private final ConverterToDTO converterToDTO;
+  private final MongoTemplate mongoTemplate;
 
   @Override
   @Transactional(readOnly = true)
@@ -105,7 +115,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   @Override
   @Cacheable(value = "rankedParkingMetersByDate", key = "#startDate + '_' + #endDate")
   @Transactional(readOnly = true)
-  public Page<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorData(
+  public Slice<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorData(
       LocalDate startDate, LocalDate endDate, Pageable pageable) {
     return ticketRepository.rankParquimetrosPorArrecadacaoPorData(startDate, endDate, pageable);
   }
@@ -113,9 +123,321 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   @Override
   @Cacheable(value = "rankedParkingMetersByDay", key = "#startDate + '_' + #endDate")
   @Transactional(readOnly = true)
-  public Page<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorDia(
+  public Slice<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorDia(
       LocalDate startDate, LocalDate endDate, Pageable pageable) {
     return ticketRepository.rankParquimetrosPorArrecadacaoPorDia(startDate, endDate, pageable);
+  }
+
+  @Override
+  public ParkingSpaceDTO getAvailableSpace(String id, LocalDate date) {
+    log.info("get Available Spaces");
+
+    var parkingMeter = getParkingMeter(id);
+
+    MatchOperation matchParkingMeter = Aggregation.match(Criteria.where("_id").is(id));
+
+    LookupOperation lookupOperation = Aggregation.lookup("ticket", "_id", "parquimetro._id", "tickets");
+
+    UnwindOperation unwindTickets = Aggregation.unwind("tickets", "index", Boolean.TRUE);
+
+    MatchOperation matchPendingTickets =
+            Aggregation.match(
+                    new Criteria().orOperator(
+                            Criteria.where("index").is(null),
+                            new Criteria().andOperator(
+                                    Criteria.where("tickets.status_pagamento").is(Ticket.StatusPagamento.PENDENTE),
+                                    Criteria.where("tickets.horario_inicio").gte(date.atStartOfDay()).lte(date.plusDays(1).atStartOfDay())
+                            )
+                    )
+            );
+
+    GroupOperation groupTickets = Aggregation.group("tickets.parquimetro._id")
+            .first("vagas_disponiveis")
+            .as("spaces")
+            .first("endereco")
+            .as("endereco")
+            .first("index").as("idx")
+            .count()
+            .as("ocupadas");
+
+    ProjectionOperation projectFields = Aggregation.project("_id", "endereco", "spaces", "idx")
+            .and(AggregationSpELExpression.expressionOf("cond(idx==null, spaces, spaces-ocupadas)")).as("available");
+
+    TypedAggregation<ParkingMeter> aggregation =
+            Aggregation.newAggregation(
+                    ParkingMeter.class,
+                    matchParkingMeter,
+                    lookupOperation
+                    , unwindTickets
+                    , matchPendingTickets
+                    , groupTickets
+                    , projectFields
+            );
+
+    AggregationResults<ParkingSpaceDTO> results = mongoTemplate.aggregate(aggregation, "parkingmeter", ParkingSpaceDTO.class);
+    var listResult = results.getMappedResults();
+
+    ParkingSpaceDTO parkingSpaceDTO = new ParkingSpaceDTO();
+    if (listResult.isEmpty()){
+      parkingSpaceDTO.setDate(LocalDateTime.now());
+      parkingSpaceDTO.setEndereco(parkingMeter.getEndereco());
+      parkingSpaceDTO.setSpaces(parkingMeter.getVagasDisponiveis());
+      parkingSpaceDTO.setAvailable(0);
+    } else {
+      parkingSpaceDTO = listResult.get(0);
+      parkingSpaceDTO.setDate(LocalDateTime.now());
+    }
+
+    return parkingSpaceDTO;
+  }
+
+  @Override
+  public TimesParkedDTO getTimesParked(String parkingMeterId, String licensePlate) {
+    getParkingMeter(parkingMeterId);
+
+    MatchOperation matchParkingMeter = Aggregation.match(Criteria.where("_id").is(parkingMeterId));
+
+    LookupOperation lookupOperation = Aggregation.lookup("ticket", "_id", "parquimetro._id", "tickets");
+
+    UnwindOperation unwindTickets = Aggregation.unwind("tickets", "index", Boolean.TRUE);
+
+    MatchOperation matchPendingTickets =
+            Aggregation.match(
+                    new Criteria().orOperator(
+                            Criteria.where("index").is(null),
+                            Criteria.where("tickets.veiculo.license_plate").is(licensePlate)
+                    )
+            );
+
+    GroupOperation groupTickets = Aggregation.group("tickets.veiculo._id")
+            .first("index").as("idx")
+            .count()
+            .as("cont_parked");
+
+    ProjectionOperation projectFields = Aggregation.project("_id", "idx", "cont_parked")
+            .and(AggregationSpELExpression.expressionOf("cond(idx==null, 0, cont_parked)")).as("timesParked");
+
+    TypedAggregation<ParkingMeter> aggregation =
+            Aggregation.newAggregation(
+                    ParkingMeter.class,
+                    matchParkingMeter,
+                    lookupOperation,
+                    unwindTickets,
+                    matchPendingTickets,
+                    groupTickets,
+                    projectFields
+            );
+
+    AggregationResults<TimesParkedDTO> results = mongoTemplate.aggregate(aggregation, "parkingmeter", TimesParkedDTO.class);
+    var listResult = results.getMappedResults();
+
+    TimesParkedDTO timesParkedDTO = new TimesParkedDTO();
+    if (listResult.isEmpty()){
+      timesParkedDTO.setDate(LocalDateTime.now());
+      timesParkedDTO.setTimesParked(0);
+    } else {
+      timesParkedDTO = listResult.get(0);
+      timesParkedDTO.setDate(LocalDateTime.now());
+    }
+    return timesParkedDTO;
+  }
+
+  @Override
+  public TimesParkedDTO getTimesParkedWithDateRange(String parkingMeterId, String licensePlate, LocalDate begin, LocalDate end) {
+    getParkingMeter(parkingMeterId);
+
+    if(end == null) {
+      end = LocalDate.now();
+    }
+
+    if (begin.isAfter(end)){
+      throw new ParkingMeterException("Data begin is greater than data end", HttpStatus.BAD_REQUEST);
+    }
+
+    MatchOperation matchParkingMeter = Aggregation.match(Criteria.where("_id").is(parkingMeterId));
+
+    LookupOperation lookupOperation = Aggregation.lookup("ticket", "_id", "parquimetro._id", "tickets");
+
+    UnwindOperation unwindTickets = Aggregation.unwind("tickets", "index", Boolean.TRUE);
+
+    MatchOperation matchPendingTickets =
+            Aggregation.match(
+                    new Criteria().orOperator(
+                            Criteria.where("index").is(null),
+                            new Criteria().andOperator(
+                                    Criteria.where("tickets.veiculo.license_plate").is(licensePlate),
+                                    Criteria.where("tickets.horario_inicio").gte(begin.atStartOfDay()).lt(end.plusDays(1))
+                            )
+                    )
+            );
+
+    GroupOperation groupTickets = Aggregation.group("tickets.veiculo._id")
+            .first("index").as("idx")
+            .count()
+            .as("cont_parked");
+
+    ProjectionOperation projectFields = Aggregation.project("_id", "idx", "cont_parked")
+            .and(AggregationSpELExpression.expressionOf("cond(idx==null, 0, cont_parked)")).as("timesParked");
+
+    TypedAggregation<ParkingMeter> aggregation =
+            Aggregation.newAggregation(
+                    ParkingMeter.class,
+                    matchParkingMeter,
+                    lookupOperation,
+                    unwindTickets,
+                    matchPendingTickets,
+                    groupTickets,
+                    projectFields
+            );
+
+    AggregationResults<TimesParkedDTO> results = mongoTemplate.aggregate(aggregation, "parkingmeter", TimesParkedDTO.class);
+    var listResult = results.getMappedResults();
+
+    TimesParkedDTO timesParkedDTO = new TimesParkedDTO();
+    if (listResult.isEmpty()){
+      timesParkedDTO.setDate(LocalDateTime.now());
+      timesParkedDTO.setTimesParked(0);
+    } else {
+      timesParkedDTO = listResult.get(0);
+      timesParkedDTO.setDate(LocalDateTime.now());
+    }
+    return timesParkedDTO;
+  }
+
+  @Override
+  public Page<ParkingMeterDTO> findAllByCidadeOrBairro(String cidade, String bairro, Pageable pageable) {
+    if(cidade == null && bairro == null){
+      throw new ParkingMeterException("At least one filter parameter must be entered", HttpStatus.BAD_REQUEST);
+    }
+    return this.parkingMeterRepository.findAllByCidadeOrBairro(cidade, bairro, pageable).map(converterToDTO::toDto);
+  }
+
+  @Override
+  public AmountEarnedDTO getParkingMeterEarnedWithDataRange(String parkingMeterId, LocalDate begin, LocalDate end) {
+    var parkingMeter = getParkingMeter(parkingMeterId);
+
+    if(end == null) {
+      end = LocalDate.now();
+    }
+
+    if (begin.isAfter(end)){
+      throw new ParkingMeterException("Data begin is greater than data end", HttpStatus.BAD_REQUEST);
+    }
+
+    MatchOperation matchParkingMeter = Aggregation.match(Criteria.where("_id").is(parkingMeterId));
+
+    LookupOperation lookupOperation = Aggregation.lookup("ticket", "_id", "parquimetro._id", "tickets");
+
+    UnwindOperation unwindTickets = Aggregation.unwind("tickets", "index", Boolean.TRUE);
+
+    MatchOperation matchPendingTickets =
+            Aggregation.match(
+                    new Criteria().andOperator(
+                            Criteria.where("tickets.status_pagamento").is(Ticket.StatusPagamento.PAGO),
+                            Criteria.where("tickets.horario_inicio").gte(begin.atStartOfDay()).lt(end.plusDays(1))
+                    )
+            );
+
+    GroupOperation groupTickets = Aggregation.group("_id")
+            .sum("tickets.valor_total_cobrado").as("earned");
+
+    ProjectionOperation projectFields = Aggregation.project("_id", "earned");
+
+    TypedAggregation<ParkingMeter> aggregation =
+            Aggregation.newAggregation(
+                    ParkingMeter.class,
+                    matchParkingMeter,
+                    lookupOperation,
+                    unwindTickets,
+                    matchPendingTickets,
+                    groupTickets,
+                    projectFields
+            );
+
+    AggregationResults<AmountEarnedDTO> results = mongoTemplate.aggregate(aggregation, "parkingmeter", AmountEarnedDTO.class);
+    var listResult = results.getMappedResults();
+
+    AmountEarnedDTO amountEarnedDTO = AmountEarnedDTO.builder()
+            .id(parkingMeter.getId())
+            .endereco(parkingMeter.getEndereco())
+            .date(LocalDateTime.now())
+            .earned(0.0)
+            .build();
+    if (!listResult.isEmpty()){
+      amountEarnedDTO.setEarned(listResult.get(0).getEarned());
+    }
+    return amountEarnedDTO;
+  }
+
+  @Override
+  public Page<AmountEarnedByLocalityDTO> getParkingMeterEarnedWithDataRangeByLocality(String cidade, String bairro, LocalDate begin, LocalDate end, Pageable pageable) {
+    if(ObjectUtils.isEmpty(cidade) && ObjectUtils.isEmpty(bairro)) {
+      throw new ParkingMeterException("At least one filter parameter must be entered", HttpStatus.BAD_REQUEST);
+    }
+
+    if(end == null) {
+      end = LocalDate.now();
+    }
+
+    if (begin.isAfter(end)){
+      throw new ParkingMeterException("Data begin is greater than data end", HttpStatus.BAD_REQUEST);
+    }
+
+    List<Criteria> criteriaList = new ArrayList<>();
+    if (!ObjectUtils.isEmpty(cidade)) {
+      criteriaList.add(Criteria.where("endereco.cidade").is(cidade));
+    }
+
+    if (!ObjectUtils.isEmpty(bairro)) {
+      criteriaList.add(Criteria.where("endereco.bairro").is(bairro));
+    }
+
+    MatchOperation matchParkingMeter = Aggregation.match(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
+
+    LookupOperation lookupOperation = Aggregation.lookup("ticket", "_id", "parquimetro._id", "tickets");
+
+    UnwindOperation unwindTickets = Aggregation.unwind("tickets", "index", Boolean.TRUE);
+
+    MatchOperation matchPendingTickets =
+            Aggregation.match(
+                    new Criteria().andOperator(
+                            Criteria.where("tickets.status_pagamento").is(Ticket.StatusPagamento.PAGO),
+                            Criteria.where("tickets.horario_inicio").gte(begin.atStartOfDay()).lt(end.plusDays(1))
+                    )
+            );
+
+    GroupOperation groupTickets = Aggregation.group("_id")
+            .first("endereco").as("endereco")
+            .sum("tickets.valor_total_cobrado").as("earned");
+
+    ProjectionOperation projectFields = Aggregation.project("endereco", "earned")
+            .and("_id").as("id");
+
+    TypedAggregation<ParkingMeter> aggregation =
+            Aggregation.newAggregation(
+                    ParkingMeter.class,
+                    matchParkingMeter,
+                    lookupOperation,
+                    unwindTickets,
+                    matchPendingTickets,
+                    groupTickets,
+                    projectFields
+            );
+
+    AggregationResults<AmountEarnedByLocalityDTO> results = mongoTemplate.aggregate(aggregation, "parkingmeter", AmountEarnedByLocalityDTO.class);
+    var listResult = results.getMappedResults();
+    Page<AmountEarnedByLocalityDTO> pageAmountEarnedByLocalityDTO = null;
+    if (!listResult.isEmpty()){
+      int startPage = (int) pageable.getOffset();
+      int endPage = Math.min((startPage + pageable.getPageSize()), listResult.size());
+      List<AmountEarnedByLocalityDTO> pageContent = listResult.subList(startPage, endPage);
+      pageAmountEarnedByLocalityDTO = new PageImpl<>(pageContent, pageable, listResult.size());
+    }
+    else {
+      pageAmountEarnedByLocalityDTO = new PageImpl<>(new ArrayList<>(), Pageable.unpaged(), 1);
+    }
+
+    return pageAmountEarnedByLocalityDTO;
   }
 
   private ParkingMeter preencherParkingMeter(String id, ParkingMeterForm parkingMeterForm) {

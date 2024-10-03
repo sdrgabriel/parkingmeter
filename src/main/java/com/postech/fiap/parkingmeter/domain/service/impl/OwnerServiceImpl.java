@@ -4,6 +4,7 @@ import com.postech.fiap.parkingmeter.domain.model.Owner;
 import com.postech.fiap.parkingmeter.domain.model.dto.OwnerDTO;
 import com.postech.fiap.parkingmeter.domain.repository.OwnerRepository;
 import com.postech.fiap.parkingmeter.domain.service.OwnerService;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class OwnerServiceImpl implements OwnerService {
 
     @Autowired

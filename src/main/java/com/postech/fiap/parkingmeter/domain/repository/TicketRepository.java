@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
@@ -37,7 +38,7 @@ public interface TicketRepository extends MongoRepository<Ticket, String> {
         "{ '$sort': { 'totalTickets': -1 } }",
         "{ '$group': { '_id': '$_id.parquimetroId', 'horarioMovimentado': { '$first': '$_id.horario' }, 'totalTickets': { '$first': '$totalTickets' } } }"
       })
-  Page<BusyHoursDTO> buscarHorarioMaisMovimentado(
+  Slice<BusyHoursDTO> buscarHorarioMaisMovimentado(
       LocalDate startDate, LocalDate endDate, Pageable pageable);
 
   @Aggregation(
@@ -46,7 +47,7 @@ public interface TicketRepository extends MongoRepository<Ticket, String> {
         "{ '$group': { '_id': { 'parquimetroId': '$parquimetro.id', 'data': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$horarioInicio' } } }, 'totalArrecadado': { '$sum': '$valorTotalCobrado' } } }",
         "{ '$sort': { 'totalArrecadado': -1 } }"
       })
-  Page<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorData(
+  Slice<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorData(
       LocalDate startDate, LocalDate endDate, Pageable pageable);
 
   @Aggregation(
@@ -56,6 +57,6 @@ public interface TicketRepository extends MongoRepository<Ticket, String> {
         "{ '$sort': { 'totalArrecadado': -1 } }",
         "{ '$group': { '_id': '$_id.data', 'parquimetros': { '$push': { 'parquimetroId': '$_id.parquimetroId', 'totalArrecadado': '$totalArrecadado' } } } }"
       })
-  Page<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorDia(
+  Slice<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorDia(
       LocalDate startDate, LocalDate endDate, Pageable pageable);
 }
