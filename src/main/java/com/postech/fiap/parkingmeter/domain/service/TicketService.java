@@ -2,6 +2,7 @@ package com.postech.fiap.parkingmeter.domain.service;
 
 import com.postech.fiap.parkingmeter.domain.model.Ticket;
 import com.postech.fiap.parkingmeter.domain.model.dto.BusyHoursDTO;
+import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterArrecadacaoDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.TicketDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.VehicleSpentDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.TicketForm;
