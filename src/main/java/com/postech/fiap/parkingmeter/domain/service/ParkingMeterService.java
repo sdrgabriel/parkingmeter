@@ -5,6 +5,9 @@ import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Endereco;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -23,8 +26,7 @@ public interface ParkingMeterService {
 
   Endereco getEnderecoByCep(String cep);
 
-  Slice<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorData(
-      LocalDate startDate, LocalDate endDate, Pageable pageable);
+  List<ParkingMeterArrecadacaoDTO> getParquimetroMaisArrecadado(String dataInicio, String dataFim);
 
   Slice<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorDia(
       LocalDate startDate, LocalDate endDate, Pageable pageable);

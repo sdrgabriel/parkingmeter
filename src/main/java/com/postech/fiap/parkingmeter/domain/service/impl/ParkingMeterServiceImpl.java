@@ -11,11 +11,13 @@ import com.postech.fiap.parkingmeter.domain.repository.TicketRepository;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+
+import java.time.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -23,13 +25,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,13 +111,23 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
           HttpStatus.BAD_REQUEST);
     }
   }
+   public List<ParkingMeterArrecadacaoDTO> getParquimetroMaisArrecadado(String dataInicio, String dataFim) {
+     // Converte LocalDateTime para Instant
+     Instant startDate = Instant.parse(dataInicio);
+     Instant endDate = Instant.parse(dataFim);
 
-  @Override
-  @Cacheable(value = "rankedParkingMetersByDate", key = "#startDate + '_' + #endDate")
-  @Transactional(readOnly = true)
-  public Slice<RankedParkingMeterDTO> rankParquimetrosPorArrecadacaoPorData(
-      LocalDate startDate, LocalDate endDate, Pageable pageable) {
-    return ticketRepository.rankParquimetrosPorArrecadacaoPorData(startDate, endDate, pageable);
+     Aggregation aggregation = Aggregation.newAggregation(
+             Aggregation.match(Criteria.where("horario_inicio").gte(startDate).lte(endDate)),
+             Aggregation.group("parquimetro")
+                     .sum("valor_total_cobrado").as("totalArrecadado"),
+             Aggregation.sort(Sort.by(Sort.Direction.DESC, "totalArrecadado")),
+             Aggregation.limit(1),
+             Aggregation.lookup("parkingMeter", "_id", "id", "parquimetroDetails")
+     );
+
+     AggregationResults<ParkingMeterArrecadacaoDTO> results = mongoTemplate.aggregate(aggregation, "ticket", ParkingMeterArrecadacaoDTO.class);
+
+     return results.getMappedResults();
   }
 
   @Override

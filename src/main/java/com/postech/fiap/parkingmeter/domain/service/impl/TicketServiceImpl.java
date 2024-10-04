@@ -14,12 +14,15 @@ import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+
+import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -28,6 +31,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +50,7 @@ public class TicketServiceImpl implements TicketService {
   private final ParkingMeterService parkingMeterService;
 
   private final ConverterToDTO converterToDTO;
+  private final MongoTemplate mongoTemplate;
 
   @Override
   @Transactional(readOnly = true)
@@ -219,6 +226,8 @@ public class TicketServiceImpl implements TicketService {
     return ticketRepository.buscarHorarioMaisMovimentado(startDate, endDate, pageable);
   }
 
+
+
   private double getTotalAmountCharged(
       LocalDateTime startHour,
       LocalDateTime endHour,
@@ -259,9 +268,10 @@ public class TicketServiceImpl implements TicketService {
   }
 
   private Ticket buildTicket(Vehicle vehicle, ParkingMeter parkingMeter) {
+    System.out.println(ZonedDateTime.now(ZoneId.of("UTC")).toLocalDateTime());
     return Ticket.builder()
         .valorTotalCobrado(0.00)
-        .horarioInicio(LocalDateTime.now())
+        .horarioInicio(ZonedDateTime.now(ZoneId.of("UTC")).toLocalDateTime())
         .horarioFim(null)
         .statusPagamento(Ticket.StatusPagamento.PENDENTE)
         .parquimetro(parkingMeter)

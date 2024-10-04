@@ -5,6 +5,8 @@ import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -57,10 +59,10 @@ public class ParkingMeterController {
   }
 
   @GetMapping("/rank-arrecadacao-por-data")
-  public ResponseEntity<Slice<RankedParkingMeterDTO>> rankParquimetrosPorArrecadacaoPorData(
-      @RequestParam LocalDate startDate, @RequestParam LocalDate endDate, Pageable pageable) {
+  public ResponseEntity<List<ParkingMeterArrecadacaoDTO>> rankParquimetrosPorArrecadacaoPorData(
+      @RequestParam String startDate, @RequestParam String endDate) {
     return ResponseEntity.ok(
-        parkingMeterService.rankParquimetrosPorArrecadacaoPorData(startDate, endDate, pageable));
+        parkingMeterService.getParquimetroMaisArrecadado(startDate, endDate));
   }
 
   @GetMapping("/rank-arrecadacao-por-dia")
