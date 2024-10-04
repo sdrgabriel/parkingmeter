@@ -1,7 +1,9 @@
 package com.postech.fiap.parkingmeter.domain.model;
 
+import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,8 +12,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-
-import java.time.LocalDateTime;
 
 @Builder
 @AllArgsConstructor
@@ -41,21 +41,9 @@ public class Ticket {
   @NotNull
   @Indexed
   @Field("status_pagamento")
-  private StatusPagamento statusPagamento;
+  private StatusPagamentoEnum statusPagamento;
 
-  @Valid
-  @NotNull
-  @Indexed
-  private ParkingMeter parquimetro;
+  @Valid @NotNull @Indexed private ParkingMeter parquimetro;
 
-  @Valid
-  @NotNull
-  @Indexed
-  private Vehicle veiculo;
-
-  public enum StatusPagamento {
-    CANCELADO,
-    PENDENTE,
-    PAGO
-  }
+  @Valid @NotNull @Indexed private Vehicle veiculo;
 }

@@ -5,13 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class ParkingMeterArrecadacaoDTO {
-    private List<ParkingMeterDTO> parquimetroDetails;
-    private double totalArrecadado;
+
+  private ParkingMeterDTO parquimetro;
+  private double totalArrecadado;
 }

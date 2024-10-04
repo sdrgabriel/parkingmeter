@@ -12,8 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ParkingSpaceDTO {
-    private LocalDateTime date;
-    private Endereco endereco;
-    private Integer spaces;
-    private Integer available;
+
+  private LocalDateTime date;
+  private Endereco endereco;
+  private Integer spaces;
+  private Integer available;
 }

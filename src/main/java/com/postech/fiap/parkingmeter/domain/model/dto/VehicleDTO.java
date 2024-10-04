@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VehicleDTO {
-  String id;
-  String licensePlate;
-  String model;
-  String color;
-  Owner owner;
+
+  private String id;
+  private String licensePlate;
+  private String model;
+  private String color;
+  private Owner owner;
 }

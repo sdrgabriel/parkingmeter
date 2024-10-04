@@ -260,6 +260,6 @@ class ParkingMeterServiceImplTests {
   }
 
   private ParkingMeterServiceImpl initUnit() {
-    return new ParkingMeterServiceImpl(parkingMeterRepository, ticketRepository, converterToDTO, mongoTemplate);
+    return new ParkingMeterServiceImpl(parkingMeterRepository, converterToDTO, mongoTemplate);
   }
 }

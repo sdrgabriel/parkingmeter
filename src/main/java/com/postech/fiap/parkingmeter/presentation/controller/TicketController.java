@@ -2,22 +2,21 @@ package com.postech.fiap.parkingmeter.presentation.controller;
 
 import com.postech.fiap.parkingmeter.domain.model.Ticket;
 import com.postech.fiap.parkingmeter.domain.model.dto.BusyHoursDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.RankedParkingMeterDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.TicketDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.VehicleSpentDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.TicketForm;
+import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
 import com.postech.fiap.parkingmeter.domain.service.TicketService;
 import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
 import jakarta.validation.Valid;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -43,8 +42,7 @@ public class TicketController {
   }
 
   @PostMapping
-  public ResponseEntity<TicketDTO> create(@Valid @RequestBody TicketForm ticketForm)
-      throws VehicleException, TicketException {
+  public ResponseEntity<TicketDTO> create(@Valid @RequestBody TicketForm ticketForm) {
     var created = this.ticketService.create(ticketForm);
     return ResponseEntity.ok(created);
   }
@@ -73,32 +71,29 @@ public class TicketController {
     return ResponseEntity.ok(ticketService.obterTotalGastoPorVeiculo(licensePlate));
   }
 
-  @GetMapping("/search/between-date")
+  @GetMapping("/consultar-tickets")
   public ResponseEntity<Page<TicketDTO>> buscarTicketsPorIntervalo(
-      @RequestParam LocalDateTime startDate,
-      @RequestParam LocalDateTime endDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
       Pageable pageable) {
     return ResponseEntity.ok(
         ticketService.buscarTicketsPorIntervaloDeData(startDate, endDate, pageable));
   }
 
-  @GetMapping("/status/{status}")
+  @GetMapping("/status")
   public ResponseEntity<Page<TicketDTO>> buscarTicketsPorStatus(
-      @PathVariable Ticket.StatusPagamento status, Pageable pageable) {
+          @RequestParam StatusPagamentoEnum status, Pageable pageable) {
     Page<TicketDTO> tickets = ticketService.buscarTicketsPorStatus(status, pageable);
     return ResponseEntity.ok(tickets);
   }
 
   @GetMapping("/horario-mais-movimentado")
   public ResponseEntity<Slice<BusyHoursDTO>> buscarHorarioMaisMovimentado(
-      @RequestParam("startDate") String startDateStr,
-      @RequestParam("endDate") String endDateStr,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
       Pageable pageable) {
 
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    LocalDate startDate = LocalDate.parse(startDateStr, formatter);
-    LocalDate endDate = LocalDate.parse(endDateStr, formatter);
-
-    return ResponseEntity.ok(ticketService.buscarHorarioMaisMovimentado(startDate, endDate, pageable));
+    return ResponseEntity.ok(
+        ticketService.buscarHorarioMaisMovimentado(startDate, endDate, pageable));
   }
 }

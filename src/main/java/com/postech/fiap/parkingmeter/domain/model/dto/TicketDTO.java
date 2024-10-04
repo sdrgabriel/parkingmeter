@@ -1,20 +1,20 @@
 package com.postech.fiap.parkingmeter.domain.model.dto;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class TicketDTO {
-  String id;
-  double valorTotalCobrado;
-  LocalDateTime horarioInicio;
-  LocalDateTime horarioFim;
-  String statusPagamento;
-  ParkingMeterDTO parquimetro;
-  VehicleDTO veiculo;
+
+  private String id;
+  private double valorTotalCobrado;
+  private LocalDateTime horarioInicio;
+  private LocalDateTime horarioFim;
+  private String statusPagamento;
+  private ParkingMeterDTO parquimetro;
+  private VehicleDTO veiculo;
 }

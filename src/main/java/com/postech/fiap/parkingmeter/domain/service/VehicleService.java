@@ -12,7 +12,7 @@ public interface VehicleService {
 
   VehicleDTO getById(String id) throws VehicleException;
 
-  VehicleDTO create(VehicleForm vehicleForm);
+  VehicleDTO create(VehicleForm vehicleForm) throws VehicleException;
 
   VehicleDTO updateById(String id, VehicleForm vehicleForm) throws VehicleException;
 

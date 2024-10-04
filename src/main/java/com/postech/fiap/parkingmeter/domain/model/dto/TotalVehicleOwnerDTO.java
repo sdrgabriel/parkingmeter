@@ -6,12 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class BusyHoursDTO {
+@Builder
+public class TotalVehicleOwnerDTO {
 
-  private ParkingMeterDTO parquimetro;
-  private Integer horarioMovimentado;
-  private long totalTickets;
+  private OwnerDTO owner;
+  private long totalVeiculo;
 }

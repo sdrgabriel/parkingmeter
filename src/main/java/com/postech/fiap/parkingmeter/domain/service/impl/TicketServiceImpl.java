@@ -1,11 +1,11 @@
 package com.postech.fiap.parkingmeter.domain.service.impl;
 
-import com.postech.fiap.parkingmeter.domain.model.Owner;
 import com.postech.fiap.parkingmeter.domain.model.ParkingMeter;
 import com.postech.fiap.parkingmeter.domain.model.Ticket;
 import com.postech.fiap.parkingmeter.domain.model.Vehicle;
 import com.postech.fiap.parkingmeter.domain.model.dto.*;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.TicketForm;
+import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
 import com.postech.fiap.parkingmeter.domain.repository.TicketRepository;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import com.postech.fiap.parkingmeter.domain.service.TicketService;
@@ -14,43 +14,33 @@ import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
-
 import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.extern.java.Log;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@AllArgsConstructor
 @Slf4j
 @ImportAutoConfiguration(TransactionAutoConfiguration.class)
 @Transactional
+@RequiredArgsConstructor
 public class TicketServiceImpl implements TicketService {
-  @Autowired private final TicketRepository ticketRepository;
 
-  private final VehicleService vehicleService;
   private final ParkingMeterService parkingMeterService;
-
+  private final TicketRepository ticketRepository;
+  private final VehicleService vehicleService;
   private final ConverterToDTO converterToDTO;
-  private final MongoTemplate mongoTemplate;
 
   @Override
   @Transactional(readOnly = true)
@@ -67,30 +57,25 @@ public class TicketServiceImpl implements TicketService {
         this.ticketRepository
             .findById(id)
             .orElseThrow(
-                () ->
-                    new TicketException("Ticket code does not exist", HttpStatus.NOT_FOUND));
+                () -> new TicketException("Ticket code does not exist", HttpStatus.NOT_FOUND));
     return converterToDTO.toDto(ticket);
   }
 
   @Override
-  public TicketDTO create(TicketForm ticketForm)
-      throws TicketException, ParkingMeterException, VehicleException {
+  public TicketDTO create(TicketForm ticketForm) {
     try {
       VehicleDTO vehicleDTO = this.vehicleService.getById(ticketForm.vehicle_id());
-      if (vehicleDTO == null) {
-        throw new VehicleException("Veículo não encontrado", HttpStatus.NOT_FOUND);
-      }
+
       Vehicle vehicle = buildVehicle(vehicleDTO);
 
       ParkingMeterDTO parkingMeterDTO =
           this.parkingMeterService.getById(ticketForm.parking_meter_id());
-      if (parkingMeterDTO == null) {
-        throw new ParkingMeterException("Parquimetro não encontrado", HttpStatus.NOT_FOUND);
-      }
+
       ParkingMeter parkingMeter = buildParkingMeter(parkingMeterDTO);
 
       Optional<Ticket> pendingTicketByVehicleId =
           this.ticketRepository.findPendingTicketByVehicleId(ticketForm.vehicle_id());
+
       if (pendingTicketByVehicleId != null && pendingTicketByVehicleId.isPresent()) {
         throw new TicketException(
             "O veículo já está estacionado em um parquímetro", HttpStatus.BAD_REQUEST);
@@ -106,11 +91,8 @@ public class TicketServiceImpl implements TicketService {
             "Este parquímetro não tem vagas disponíveis", HttpStatus.BAD_REQUEST);
       }
 
-      Ticket ticket = buildTicket(vehicle, parkingMeter);
-      Ticket createdTicket = this.ticketRepository.save(ticket);
-
-      return converterToDTO.toDto(createdTicket);
-    } catch (Exception e) {
+      return converterToDTO.toDto(ticketRepository.save(buildTicket(vehicle, parkingMeter)));
+    } catch (TicketException | ParkingMeterException | VehicleException e) {
       throw new TicketException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -122,8 +104,8 @@ public class TicketServiceImpl implements TicketService {
             .findById(id)
             .orElseThrow(() -> new TicketException("Ticket não encontrado", HttpStatus.NOT_FOUND));
 
-    var hasCanceled = ticket.getStatusPagamento() == Ticket.StatusPagamento.CANCELADO;
-    var hasCharged = ticket.getStatusPagamento() == Ticket.StatusPagamento.PAGO;
+    var hasCanceled = ticket.getStatusPagamento() == StatusPagamentoEnum.CANCELADO;
+    var hasCharged = ticket.getStatusPagamento() == StatusPagamentoEnum.PAGO;
     if (hasCanceled || hasCharged) {
       throw new TicketException("Não foi possivel atualizar este ticket", HttpStatus.BAD_REQUEST);
     }
@@ -138,7 +120,7 @@ public class TicketServiceImpl implements TicketService {
 
     ticket.setValorTotalCobrado(totalAmountCharged);
     ticket.setHorarioFim(hourNow);
-    ticket.setStatusPagamento(Ticket.StatusPagamento.PAGO);
+    ticket.setStatusPagamento(StatusPagamentoEnum.PAGO);
 
     Ticket updatedTicket = this.ticketRepository.save(ticket);
 
@@ -152,7 +134,7 @@ public class TicketServiceImpl implements TicketService {
             .findById(id)
             .orElseThrow(() -> new TicketException("Ticket não encontrado", HttpStatus.NOT_FOUND));
 
-    if (ticket.getStatusPagamento() == Ticket.StatusPagamento.CANCELADO) {
+    if (ticket.getStatusPagamento() == StatusPagamentoEnum.CANCELADO) {
       throw new TicketException("O ticket já foi cancelado", HttpStatus.BAD_REQUEST);
     }
 
@@ -166,7 +148,7 @@ public class TicketServiceImpl implements TicketService {
           "O ticket não pode ser cancelado, tempo de tolerância atingido", HttpStatus.BAD_REQUEST);
     }
 
-    ticket.setStatusPagamento(Ticket.StatusPagamento.CANCELADO);
+    ticket.setStatusPagamento(StatusPagamentoEnum.CANCELADO);
 
     Ticket updatedTicket = this.ticketRepository.save(ticket);
 
@@ -214,7 +196,7 @@ public class TicketServiceImpl implements TicketService {
       value = "ticketsPorStatus",
       key = "#status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
   @Transactional(readOnly = true)
-  public Page<TicketDTO> buscarTicketsPorStatus(Ticket.StatusPagamento status, Pageable pageable) {
+  public Page<TicketDTO> buscarTicketsPorStatus(StatusPagamentoEnum status, Pageable pageable) {
     return ticketRepository.findByStatusPagamento(status, pageable).map(converterToDTO::toDto);
   }
 
@@ -222,11 +204,9 @@ public class TicketServiceImpl implements TicketService {
   @Cacheable(value = "busyHours", key = "#startDate + '_' + #endDate")
   @Transactional(readOnly = true)
   public Slice<BusyHoursDTO> buscarHorarioMaisMovimentado(
-      LocalDate startDate, LocalDate endDate, Pageable pageable) {
+      LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
     return ticketRepository.buscarHorarioMaisMovimentado(startDate, endDate, pageable);
   }
-
-
 
   private double getTotalAmountCharged(
       LocalDateTime startHour,
@@ -246,13 +226,12 @@ public class TicketServiceImpl implements TicketService {
   }
 
   private Vehicle buildVehicle(VehicleDTO vehicleDTO) {
-    Owner owner = Owner.builder().build(); // TO-DO: Obter dono;
     return Vehicle.builder()
         .id(vehicleDTO.getId())
         .color(vehicleDTO.getColor())
         .licensePlate(vehicleDTO.getLicensePlate())
         .model(vehicleDTO.getModel())
-        .owner(owner)
+        .owner(vehicleDTO.getOwner())
         .build();
   }
 
@@ -268,12 +247,11 @@ public class TicketServiceImpl implements TicketService {
   }
 
   private Ticket buildTicket(Vehicle vehicle, ParkingMeter parkingMeter) {
-    System.out.println(ZonedDateTime.now(ZoneId.of("UTC")).toLocalDateTime());
     return Ticket.builder()
         .valorTotalCobrado(0.00)
         .horarioInicio(ZonedDateTime.now(ZoneId.of("UTC")).toLocalDateTime())
         .horarioFim(null)
-        .statusPagamento(Ticket.StatusPagamento.PENDENTE)
+        .statusPagamento(StatusPagamentoEnum.PENDENTE)
         .parquimetro(parkingMeter)
         .veiculo(vehicle)
         .build();

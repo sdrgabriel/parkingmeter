@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ParkingMeterDTO {
+
   private String id;
   private HorarioFuncionamento horarioFuncionamento;
   private Tarifa tarifa;
