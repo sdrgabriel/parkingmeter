@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ParkingMeter {
+
   @Id private String id;
 
   @Valid

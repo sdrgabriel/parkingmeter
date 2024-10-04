@@ -1,30 +1,23 @@
 package com.postech.fiap.parkingmeter.presentation.controller;
 
-import com.postech.fiap.parkingmeter.domain.model.Owner;
 import com.postech.fiap.parkingmeter.domain.model.dto.OwnerDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.forms.OwnerForm;
+import com.postech.fiap.parkingmeter.domain.model.dto.TotalVehicleOwnerDTO;
 import com.postech.fiap.parkingmeter.domain.service.OwnerService;
 import jakarta.validation.Valid;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/owner")
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class OwnerController {
 
-  @Autowired
-  private OwnerService ownerService;
-
-  @GetMapping("/hello")
-  public ResponseEntity<String> getTest() {
-    return ResponseEntity.ok("Hello World");
-  }
+  private final OwnerService ownerService;
 
   @GetMapping
   public ResponseEntity<List<OwnerDTO>> findAll(@PageableDefault(size = 15) Pageable pageable) {
@@ -35,6 +28,11 @@ public class OwnerController {
   @GetMapping("/{id}")
   public ResponseEntity<OwnerDTO> getById(@PathVariable String id) {
     return ResponseEntity.ok(this.ownerService.getById(id));
+  }
+
+  @GetMapping("/quantidade-veiculo")
+  public ResponseEntity<TotalVehicleOwnerDTO> getQuantidadeVeiculosPorId(@RequestParam String id) {
+    return ResponseEntity.ok(ownerService.getQuantidadeVeiculosPorCpf(id));
   }
 
   @PutMapping("/{id}")
@@ -53,5 +51,4 @@ public class OwnerController {
     this.ownerService.deleteById(id);
     return ResponseEntity.ok().build();
   }
-
 }

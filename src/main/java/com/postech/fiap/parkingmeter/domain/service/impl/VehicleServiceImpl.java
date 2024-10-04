@@ -4,11 +4,11 @@ import com.postech.fiap.parkingmeter.domain.model.Owner;
 import com.postech.fiap.parkingmeter.domain.model.Vehicle;
 import com.postech.fiap.parkingmeter.domain.model.dto.VehicleDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.VehicleForm;
+import com.postech.fiap.parkingmeter.domain.repository.OwnerRepository;
 import com.postech.fiap.parkingmeter.domain.repository.VehicleRepository;
 import com.postech.fiap.parkingmeter.domain.service.VehicleService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -28,6 +28,7 @@ public class VehicleServiceImpl implements VehicleService {
 
   private final VehicleRepository vehicleRepository;
   private final ConverterToDTO converterToDTO;
+  private final OwnerRepository ownerRepository;
 
   @Override
   @Transactional(readOnly = true)
@@ -47,9 +48,13 @@ public class VehicleServiceImpl implements VehicleService {
   }
 
   @Override
-  public VehicleDTO create(VehicleForm vehicleForm) {
+  public VehicleDTO create(VehicleForm vehicleForm) throws VehicleException {
     log.info("Create vehicle");
-    Owner owner = Owner.builder().build();
+    Owner owner =
+        ownerRepository
+            .findById(vehicleForm.owner_id())
+            .orElseThrow(() -> new VehicleException("Not found Vehicle", HttpStatus.NOT_FOUND));
+
     Vehicle vehicle =
         Vehicle.builder()
             .color(vehicleForm.color())
@@ -71,9 +76,6 @@ public class VehicleServiceImpl implements VehicleService {
     vehicle.setColor(vehicleForm.color());
     vehicle.setLicensePlate(vehicleForm.licensePlate());
     vehicle.setModel(vehicleForm.model());
-
-    Owner owner = Owner.builder().build();
-    vehicle.setOwner(owner);
 
     return converterToDTO.toDto(vehicleRepository.save(vehicle));
   }

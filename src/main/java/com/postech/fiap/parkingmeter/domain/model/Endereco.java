@@ -9,12 +9,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 public class Endereco {
 
-    private String logradouro;
-    private String bairro;
-    private String cidade;
-    private String estado;
-    private String cep;
-    private Integer numero;
-    private String complemento;
-
+  private String logradouro;
+  private String bairro;
+  private String cidade;
+  private String estado;
+  private String cep;
+  private Integer numero;
+  private String complemento;
 }

@@ -31,7 +31,8 @@ public class VehicleController {
   }
 
   @PostMapping
-  public ResponseEntity<VehicleDTO> create(@Valid @RequestBody VehicleForm vehicleForm) {
+  public ResponseEntity<VehicleDTO> create(@Valid @RequestBody VehicleForm vehicleForm)
+      throws VehicleException {
     var created = vehicleService.create(vehicleForm);
     return ResponseEntity.ok(created);
   }

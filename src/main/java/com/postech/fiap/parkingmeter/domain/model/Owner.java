@@ -12,37 +12,36 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 public class Owner {
 
-    @Id
-    private String id;
-    private String nome;
-    @Indexed(unique = true)
-    private String cpf;
-    @Indexed(unique = true)
-    private String email;
-    private String telefone;
-    private Endereco endereco;
+  @Id private String id;
 
-    public static Owner toEntity(OwnerDTO ownerDTO) {
-        return Owner
-                .builder()
-                .id(ownerDTO.id())
-                .nome(ownerDTO.nome())
-                .cpf(ownerDTO.cpf())
-                .email(ownerDTO.email())
-                .telefone(ownerDTO.telefone())
-                .endereco(
-                        Endereco
-                                .builder()
-                                .logradouro(ownerDTO.endereco().logradouro())
-                                .bairro(ownerDTO.endereco().bairro())
-                                .cidade(ownerDTO.endereco().cidade())
-                                .estado(ownerDTO.endereco().estado())
-                                .complemento(ownerDTO.endereco().complemento())
-                                .cep(ownerDTO.endereco().cep())
-                                .numero(ownerDTO.endereco().numero())
-                                .build()
-                )
-                .build();
-    }
+  private String nome;
 
+  @Indexed(unique = true)
+  private String cpf;
+
+  @Indexed(unique = true)
+  private String email;
+
+  private String telefone;
+  private Endereco endereco;
+
+  public static Owner toEntity(OwnerDTO ownerDTO) {
+    return Owner.builder()
+        .id(ownerDTO.id())
+        .nome(ownerDTO.nome())
+        .cpf(ownerDTO.cpf())
+        .email(ownerDTO.email())
+        .telefone(ownerDTO.telefone())
+        .endereco(
+            Endereco.builder()
+                .logradouro(ownerDTO.endereco().logradouro())
+                .bairro(ownerDTO.endereco().bairro())
+                .cidade(ownerDTO.endereco().cidade())
+                .estado(ownerDTO.endereco().estado())
+                .complemento(ownerDTO.endereco().complemento())
+                .cep(ownerDTO.endereco().cep())
+                .numero(ownerDTO.endereco().numero())
+                .build())
+        .build();
+  }
 }

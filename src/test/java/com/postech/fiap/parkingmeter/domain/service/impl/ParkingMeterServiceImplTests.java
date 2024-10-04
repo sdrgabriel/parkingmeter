@@ -15,6 +15,7 @@ import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Endereco;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.HorarioFuncionamento;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Tarifa;
 import com.postech.fiap.parkingmeter.domain.repository.ParkingMeterRepository;
+import com.postech.fiap.parkingmeter.domain.repository.TicketRepository;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import java.util.*;
@@ -27,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +41,9 @@ class ParkingMeterServiceImplTests {
   private final Map<String, Object> testData = createTestData();
 
   @Mock private ParkingMeterRepository parkingMeterRepository;
+  @Mock private TicketRepository ticketRepository;
   @Mock private ConverterToDTO converterToDTO;
+  @Mock MongoTemplate mongoTemplate;
 
   @Test
   void givenFormObject_whenCreate_thenReturnDTO() {
@@ -256,6 +260,6 @@ class ParkingMeterServiceImplTests {
   }
 
   private ParkingMeterServiceImpl initUnit() {
-    return new ParkingMeterServiceImpl(parkingMeterRepository, converterToDTO);
+    return new ParkingMeterServiceImpl(parkingMeterRepository, converterToDTO, mongoTemplate);
   }
 }

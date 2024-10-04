@@ -10,5 +10,4 @@ public record Endereco(
     String bairro,
     @JsonAlias("localidade") String cidade,
     String estado,
-    @Indexed(unique = true)
-    String cep) {}
+    @Indexed(unique = true) String cep) {}

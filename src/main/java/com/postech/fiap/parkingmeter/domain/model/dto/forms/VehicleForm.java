@@ -10,4 +10,4 @@ public record VehicleForm(
     @JsonAlias("license_plate") @Valid @NotNull String licensePlate,
     @JsonAlias("model") @Valid @NotNull String model,
     @JsonAlias("color") @Valid @NotNull String color,
-    @JsonAlias("owner") @Valid @NotNull OwnerForm owner) {}
+    @JsonAlias("owner") @Valid @NotNull String owner_id) {}
