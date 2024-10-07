@@ -3,7 +3,7 @@ package com.postech.fiap.parkingmeter.domain.model.dto;
 import lombok.Builder;
 
 @Builder
-public record EnderecoDTO(
+public record AddressDTO(
     String logradouro,
     String bairro,
     String cidade,

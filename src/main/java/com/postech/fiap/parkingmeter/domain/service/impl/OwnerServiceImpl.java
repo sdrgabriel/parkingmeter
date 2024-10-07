@@ -56,7 +56,7 @@ public class OwnerServiceImpl implements OwnerService {
 
   @Override
   @Transactional(readOnly = true)
-  public TotalVehicleOwnerDTO getQuantidadeVeiculosPorCpf(String id) {
+  public TotalVehicleOwnerDTO getVehicleCountByCpf(String id) {
     OwnerDTO owner = getById(id);
     long total = vehicleRepository.countByProprietarioCpf(id);
     return TotalVehicleOwnerDTO.builder().owner(owner).totalVeiculo(total).build();

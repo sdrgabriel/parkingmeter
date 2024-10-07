@@ -4,7 +4,7 @@ import com.postech.fiap.parkingmeter.domain.model.dto.BusyHoursDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.TicketDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.VehicleSpentDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.TicketForm;
-import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
+import com.postech.fiap.parkingmeter.domain.model.enums.PaymentStatusEnum;
 import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
 import java.time.LocalDateTime;
@@ -25,13 +25,13 @@ public interface TicketService {
 
   void deleteById(String id);
 
-  VehicleSpentDTO obterTotalGastoPorVeiculo(String licensePlate) throws VehicleException;
+  VehicleSpentDTO getTotalSpentByVehicle(String licensePlate) throws VehicleException;
 
-  Page<TicketDTO> buscarTicketsPorIntervaloDeData(
+  Page<TicketDTO> findTicketsByDateRange(
       LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
-  Page<TicketDTO> buscarTicketsPorStatus(StatusPagamentoEnum status, Pageable pageable);
+  Page<TicketDTO> findTicketsByStatus(PaymentStatusEnum status, Pageable pageable);
 
-  Slice<BusyHoursDTO> buscarHorarioMaisMovimentado(
+  Slice<BusyHoursDTO> findBusiestHour(
       LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 }

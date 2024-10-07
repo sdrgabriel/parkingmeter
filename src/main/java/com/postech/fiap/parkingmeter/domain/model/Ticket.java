@@ -1,6 +1,6 @@
 package com.postech.fiap.parkingmeter.domain.model;
 
-import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
+import com.postech.fiap.parkingmeter.domain.model.enums.PaymentStatusEnum;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -41,7 +41,7 @@ public class Ticket {
   @NotNull
   @Indexed
   @Field("status_pagamento")
-  private StatusPagamentoEnum statusPagamento;
+  private PaymentStatusEnum statusPagamento;
 
   @Valid @NotNull @Indexed private ParkingMeter parquimetro;
 

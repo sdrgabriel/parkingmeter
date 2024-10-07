@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
+import com.postech.fiap.parkingmeter.domain.model.enums.PaymentStatusEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -29,7 +29,7 @@ public interface TicketRepository extends MongoRepository<Ticket, String> {
   Page<Ticket> findByHorarioInicioBetween(
       LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
-  Page<Ticket> findByStatusPagamento(StatusPagamentoEnum status, Pageable pageable);
+  Page<Ticket> findByStatusPagamento(PaymentStatusEnum status, Pageable pageable);
 
   @Aggregation(
       pipeline = {

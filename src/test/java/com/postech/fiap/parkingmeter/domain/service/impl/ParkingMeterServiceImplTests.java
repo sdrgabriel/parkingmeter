@@ -11,8 +11,8 @@ import static org.mockito.Mockito.when;
 import com.postech.fiap.parkingmeter.domain.model.ParkingMeter;
 import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Endereco;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.HorarioFuncionamento;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Address;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.OperatingHours;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Tarifa;
 import com.postech.fiap.parkingmeter.domain.repository.ParkingMeterRepository;
 import com.postech.fiap.parkingmeter.domain.repository.TicketRepository;
@@ -97,24 +97,24 @@ class ParkingMeterServiceImplTests {
   }
 
   @Test
-  void givenCepObject_whenGetEnderecoByCepIsValid_thenReturnEndereco() {
+  void givenCepObject_whenGetEnderecoByCepIsValid_thenReturnAddress() {
     var endereco = ((ParkingMeter) testData.get(KEY_DOCUMENT)).getEndereco();
 
     var unit = initUnit();
-    var result = unit.getEnderecoByCep(endereco.cep());
+    var result = unit.getAddressByCep(endereco.cep());
     assertNotNull(result);
 
     assertThat(result).isEqualTo(endereco);
   }
 
   @Test
-  void givenCepObject_whenGetEnderecoByCepIsInvalid_thenReturnException() {
+  void givenCepObject_whenGetAddressByCepIsInvalid_thenReturnException() {
     var invalidCep = "1";
     var expectedMessage =
         "Error retrieving address, please evaluate zip code: %s".formatted(invalidCep);
 
     var unit = initUnit();
-    var result = assertThrows(ParkingMeterException.class, () -> unit.getEnderecoByCep(invalidCep));
+    var result = assertThrows(ParkingMeterException.class, () -> unit.getAddressByCep(invalidCep));
     assertNotNull(result);
 
     var actualMessage = result.getMessage();
@@ -187,7 +187,7 @@ class ParkingMeterServiceImplTests {
     var parkingMeterForm = (ParkingMeterForm) testData.get(KEY_FORM);
     var parkingMeterFormMod =
         new ParkingMeterForm(
-            new HorarioFuncionamento("15:00", "05:00"),
+            new OperatingHours("15:00", "05:00"),
             parkingMeterForm.tarifa(),
             parkingMeterForm.vagasDisponiveis(),
             parkingMeterForm.cep());
@@ -240,11 +240,11 @@ class ParkingMeterServiceImplTests {
   }
 
   private Map<String, Object> createTestData() {
-    final var HORARIO_FUNCIONAMENTO = new HorarioFuncionamento("05:00", "15:00");
+    final var HORARIO_FUNCIONAMENTO = new OperatingHours("05:00", "15:00");
     final var TARIFA = new Tarifa(5, 10);
     final var VAGAS_DISPONIVEIS = 7;
     final var ENDERECO =
-        new Endereco(
+        new Address(
             "Rua Domingos Barreto", "Jardim Everest", "São Paulo", "São Paulo", "05601-030");
     Map<String, Object> datas = new HashMap<>();
     datas.put(

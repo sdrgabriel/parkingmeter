@@ -5,7 +5,7 @@ import com.postech.fiap.parkingmeter.domain.model.Ticket;
 import com.postech.fiap.parkingmeter.domain.model.Vehicle;
 import com.postech.fiap.parkingmeter.domain.model.dto.*;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.TicketForm;
-import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
+import com.postech.fiap.parkingmeter.domain.model.enums.PaymentStatusEnum;
 import com.postech.fiap.parkingmeter.domain.repository.TicketRepository;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import com.postech.fiap.parkingmeter.domain.service.TicketService;
@@ -104,8 +104,8 @@ public class TicketServiceImpl implements TicketService {
             .findById(id)
             .orElseThrow(() -> new TicketException("Ticket não encontrado", HttpStatus.NOT_FOUND));
 
-    var hasCanceled = ticket.getStatusPagamento() == StatusPagamentoEnum.CANCELADO;
-    var hasCharged = ticket.getStatusPagamento() == StatusPagamentoEnum.PAGO;
+    var hasCanceled = ticket.getStatusPagamento() == PaymentStatusEnum.CANCELADO;
+    var hasCharged = ticket.getStatusPagamento() == PaymentStatusEnum.PAGO;
     if (hasCanceled || hasCharged) {
       throw new TicketException("Não foi possivel atualizar este ticket", HttpStatus.BAD_REQUEST);
     }
@@ -120,7 +120,7 @@ public class TicketServiceImpl implements TicketService {
 
     ticket.setValorTotalCobrado(totalAmountCharged);
     ticket.setHorarioFim(hourNow);
-    ticket.setStatusPagamento(StatusPagamentoEnum.PAGO);
+    ticket.setStatusPagamento(PaymentStatusEnum.PAGO);
 
     Ticket updatedTicket = this.ticketRepository.save(ticket);
 
@@ -134,7 +134,7 @@ public class TicketServiceImpl implements TicketService {
             .findById(id)
             .orElseThrow(() -> new TicketException("Ticket não encontrado", HttpStatus.NOT_FOUND));
 
-    if (ticket.getStatusPagamento() == StatusPagamentoEnum.CANCELADO) {
+    if (ticket.getStatusPagamento() == PaymentStatusEnum.CANCELADO) {
       throw new TicketException("O ticket já foi cancelado", HttpStatus.BAD_REQUEST);
     }
 
@@ -148,7 +148,7 @@ public class TicketServiceImpl implements TicketService {
           "O ticket não pode ser cancelado, tempo de tolerância atingido", HttpStatus.BAD_REQUEST);
     }
 
-    ticket.setStatusPagamento(StatusPagamentoEnum.CANCELADO);
+    ticket.setStatusPagamento(PaymentStatusEnum.CANCELADO);
 
     Ticket updatedTicket = this.ticketRepository.save(ticket);
 
@@ -164,7 +164,7 @@ public class TicketServiceImpl implements TicketService {
   @Override
   @Cacheable(value = "totalGastoVeiculo", key = "#licensePlate")
   @Transactional(readOnly = true)
-  public VehicleSpentDTO obterTotalGastoPorVeiculo(String licensePlate) throws VehicleException {
+  public VehicleSpentDTO getTotalSpentByVehicle(String licensePlate) throws VehicleException {
     List<Ticket> tickets = ticketRepository.findByVeiculoLicensePlate(licensePlate);
 
     if (tickets.isEmpty()) {
@@ -184,7 +184,7 @@ public class TicketServiceImpl implements TicketService {
       value = "ticketsPorIntervaloDeData",
       key = "#startDate + '-' + #endDate + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
   @Transactional(readOnly = true)
-  public Page<TicketDTO> buscarTicketsPorIntervaloDeData(
+  public Page<TicketDTO> findTicketsByDateRange(
       LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
     return ticketRepository
         .findByHorarioInicioBetween(startDate, endDate, pageable)
@@ -196,14 +196,14 @@ public class TicketServiceImpl implements TicketService {
       value = "ticketsPorStatus",
       key = "#status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
   @Transactional(readOnly = true)
-  public Page<TicketDTO> buscarTicketsPorStatus(StatusPagamentoEnum status, Pageable pageable) {
+  public Page<TicketDTO> findTicketsByStatus(PaymentStatusEnum status, Pageable pageable) {
     return ticketRepository.findByStatusPagamento(status, pageable).map(converterToDTO::toDto);
   }
 
   @Override
   @Cacheable(value = "busyHours", key = "#startDate + '_' + #endDate")
   @Transactional(readOnly = true)
-  public Slice<BusyHoursDTO> buscarHorarioMaisMovimentado(
+  public Slice<BusyHoursDTO> findBusiestHour(
       LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
     return ticketRepository.buscarHorarioMaisMovimentado(startDate, endDate, pageable);
   }
@@ -251,7 +251,7 @@ public class TicketServiceImpl implements TicketService {
         .valorTotalCobrado(0.00)
         .horarioInicio(ZonedDateTime.now(ZoneId.of("UTC")).toLocalDateTime())
         .horarioFim(null)
-        .statusPagamento(StatusPagamentoEnum.PENDENTE)
+        .statusPagamento(PaymentStatusEnum.PENDENTE)
         .parquimetro(parkingMeter)
         .veiculo(vehicle)
         .build();

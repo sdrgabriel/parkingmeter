@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record OwnerDTO(
-    String id, String nome, String cpf, String telefone, String email, EnderecoDTO endereco) {
+    String id, String nome, String cpf, String telefone, String email, AddressDTO endereco) {
 
   public static OwnerDTO toDTO(Owner owner) {
     return OwnerDTO.builder()
@@ -15,7 +15,7 @@ public record OwnerDTO(
         .email(owner.getEmail())
         .telefone(owner.getTelefone())
         .endereco(
-            EnderecoDTO.builder()
+            AddressDTO.builder()
                 .logradouro(owner.getEndereco().getLogradouro())
                 .bairro(owner.getEndereco().getBairro())
                 .cidade(owner.getEndereco().getCidade())

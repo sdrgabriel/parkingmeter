@@ -3,8 +3,8 @@ package com.postech.fiap.parkingmeter.domain.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.postech.fiap.parkingmeter.domain.model.ParkingMeter;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Endereco;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.HorarioFuncionamento;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Address;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.OperatingHours;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Tarifa;
 import org.assertj.core.api.Assertions;
 import org.bson.types.ObjectId;
@@ -30,10 +30,10 @@ class ParkingMeterRepositoryTests {
     var parkingMeter =
         new ParkingMeter(
             ID,
-            new HorarioFuncionamento("05:00", "15:00"),
+            new OperatingHours("05:00", "15:00"),
             new Tarifa(5, 10),
             7,
-            new Endereco(
+            new Address(
                 "Rua Domingos Barreto", "Jardim Everest", "São Paulo", "São Paulo", "05601-030"),
             null);
     var created = this.parkingMeterRepository.save(parkingMeter);

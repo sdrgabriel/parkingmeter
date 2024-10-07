@@ -1,11 +1,10 @@
 package com.postech.fiap.parkingmeter.presentation.controller;
 
-import com.postech.fiap.parkingmeter.domain.model.Ticket;
 import com.postech.fiap.parkingmeter.domain.model.dto.BusyHoursDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.TicketDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.VehicleSpentDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.TicketForm;
-import com.postech.fiap.parkingmeter.domain.model.enums.StatusPagamentoEnum;
+import com.postech.fiap.parkingmeter.domain.model.enums.PaymentStatusEnum;
 import com.postech.fiap.parkingmeter.domain.service.TicketService;
 import com.postech.fiap.parkingmeter.infrastructure.exception.TicketException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
@@ -68,7 +67,7 @@ public class TicketController {
   @GetMapping("/total-gasto/{licensePlate}")
   public ResponseEntity<VehicleSpentDTO> obterTotalGastoPorVeiculo(
       @PathVariable String licensePlate) throws VehicleException {
-    return ResponseEntity.ok(ticketService.obterTotalGastoPorVeiculo(licensePlate));
+    return ResponseEntity.ok(ticketService.getTotalSpentByVehicle(licensePlate));
   }
 
   @GetMapping("/consultar-tickets")
@@ -77,13 +76,13 @@ public class TicketController {
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
       Pageable pageable) {
     return ResponseEntity.ok(
-        ticketService.buscarTicketsPorIntervaloDeData(startDate, endDate, pageable));
+        ticketService.findTicketsByDateRange(startDate, endDate, pageable));
   }
 
   @GetMapping("/status")
   public ResponseEntity<Page<TicketDTO>> buscarTicketsPorStatus(
-          @RequestParam StatusPagamentoEnum status, Pageable pageable) {
-    Page<TicketDTO> tickets = ticketService.buscarTicketsPorStatus(status, pageable);
+          @RequestParam PaymentStatusEnum status, Pageable pageable) {
+    Page<TicketDTO> tickets = ticketService.findTicketsByStatus(status, pageable);
     return ResponseEntity.ok(tickets);
   }
 
@@ -94,6 +93,6 @@ public class TicketController {
       Pageable pageable) {
 
     return ResponseEntity.ok(
-        ticketService.buscarHorarioMaisMovimentado(startDate, endDate, pageable));
+        ticketService.findBusiestHour(startDate, endDate, pageable));
   }
 }

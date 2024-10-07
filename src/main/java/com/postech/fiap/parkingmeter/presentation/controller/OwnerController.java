@@ -32,7 +32,7 @@ public class OwnerController {
 
   @GetMapping("/quantidade-veiculo")
   public ResponseEntity<TotalVehicleOwnerDTO> getQuantidadeVeiculosPorId(@RequestParam String id) {
-    return ResponseEntity.ok(ownerService.getQuantidadeVeiculosPorCpf(id));
+    return ResponseEntity.ok(ownerService.getVehicleCountByCpf(id));
   }
 
   @PutMapping("/{id}")

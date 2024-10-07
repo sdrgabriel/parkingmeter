@@ -5,8 +5,8 @@ import static org.mockito.BDDMockito.*;
 
 import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterDTO;
 import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Endereco;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.HorarioFuncionamento;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Address;
+import com.postech.fiap.parkingmeter.domain.model.parkingmeter.OperatingHours;
 import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Tarifa;
 import com.postech.fiap.parkingmeter.domain.service.ParkingMeterService;
 import java.util.*;
@@ -117,7 +117,7 @@ class ParkingMeterControllerTests {
 
     @Test
     void givenIdObkectAndParkingMeterFormObject_whenIsValidToUpdate_thenReturnUpdatedDTO() {
-        var newHorarioFuncionamento = new HorarioFuncionamento("01:00", "12:00");
+        var newHorarioFuncionamento = new OperatingHours("01:00", "12:00");
         var parkingMeterForm = (ParkingMeterForm) testData.get(KEY_FORM);
         var parkingMeterFormMod = new ParkingMeterForm(
                 newHorarioFuncionamento,
@@ -152,10 +152,10 @@ class ParkingMeterControllerTests {
     }
 
     private Map<String, Object> createTestData() {
-        final var HORARIO_FUNCIONAMENTO = new HorarioFuncionamento("05:00", "15:00");
+        final var HORARIO_FUNCIONAMENTO = new OperatingHours("05:00", "15:00");
         final var TARIFA = new Tarifa(5, 10);
         final var VAGAS_DISPONIVEIS = 7;
-        final var ENDERECO = new Endereco(
+        final var ENDERECO = new Address(
                 "Rua Domingos Barreto",
                 "Jardim Everest",
                 "São Paulo",

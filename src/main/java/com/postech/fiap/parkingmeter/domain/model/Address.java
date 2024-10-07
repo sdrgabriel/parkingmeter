@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 @Data
 @Builder
-public class Endereco {
+public class Address {
 
   private String logradouro;
   private String bairro;
