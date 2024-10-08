@@ -59,7 +59,7 @@ public class ParkingMeterController {
   public ResponseEntity<Slice<ParkingMeterArrecadacaoDTO>> rankParquimetrosPorArrecadacaoPorData(
       @RequestParam String startDate, @RequestParam String endDate, Pageable pageable) {
     return ResponseEntity.ok(
-        parkingMeterService.getParquimetroMaisArrecadado(startDate, endDate, pageable));
+        parkingMeterService.getHighestEarningParkingMeter(startDate, endDate, pageable));
   }
 
   @GetMapping("/available")
@@ -101,7 +101,7 @@ public class ParkingMeterController {
       @RequestParam(name = "bairro", required = false) String bairro,
       @PageableDefault(size = 15) Pageable pageable) {
     return ResponseEntity.ok(
-        this.parkingMeterService.findAllByCidadeOrBairro(cidade, bairro, pageable));
+        this.parkingMeterService.findAllByCityOrNeighborhood(cidade, bairro, pageable));
   }
 
   @GetMapping("/earned")

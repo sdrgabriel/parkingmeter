@@ -23,7 +23,7 @@ public class Owner {
   private String email;
 
   private String telefone;
-  private Endereco endereco;
+  private Address endereco;
 
   public static Owner toEntity(OwnerDTO ownerDTO) {
     return Owner.builder()
@@ -33,7 +33,7 @@ public class Owner {
         .email(ownerDTO.email())
         .telefone(ownerDTO.telefone())
         .endereco(
-            Endereco.builder()
+            Address.builder()
                 .logradouro(ownerDTO.endereco().logradouro())
                 .bairro(ownerDTO.endereco().bairro())
                 .cidade(ownerDTO.endereco().cidade())

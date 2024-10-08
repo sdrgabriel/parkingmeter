@@ -1,6 +1,6 @@
 package com.postech.fiap.parkingmeter.domain.model.enums;
 
-public enum StatusPagamentoEnum {
+public enum PaymentStatusEnum {
   CANCELADO,
   PENDENTE,
   PAGO

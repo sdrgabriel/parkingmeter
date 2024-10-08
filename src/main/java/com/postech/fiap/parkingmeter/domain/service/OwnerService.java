@@ -16,5 +16,5 @@ public interface OwnerService {
 
   void deleteById(String id);
 
-  TotalVehicleOwnerDTO getQuantidadeVeiculosPorCpf(String id);
+  TotalVehicleOwnerDTO getVehicleCountByCpf(String id);
 }
