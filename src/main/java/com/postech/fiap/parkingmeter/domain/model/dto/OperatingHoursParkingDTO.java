@@ -9,9 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AmountEarnedByLocalityDTO {
+public class OperatingHoursParkingDTO {
 
-  private String id;
-  private AddressDTO address;
-  private Double earned;
+  private String start;
+  private String end;
 }

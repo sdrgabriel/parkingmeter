@@ -1,20 +1,19 @@
 package com.postech.fiap.parkingmeter.domain.model;
 
-import com.postech.fiap.parkingmeter.domain.model.dto.OwnerDTO;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document
+@Document(collection = "owner")
 @Data
 @Builder
 public class Owner {
 
   @Id private String id;
 
-  private String nome;
+  private String name;
 
   @Indexed(unique = true)
   private String cpf;
@@ -22,26 +21,7 @@ public class Owner {
   @Indexed(unique = true)
   private String email;
 
-  private String telefone;
-  private Address endereco;
+  private String phone;
 
-  public static Owner toEntity(OwnerDTO ownerDTO) {
-    return Owner.builder()
-        .id(ownerDTO.id())
-        .nome(ownerDTO.nome())
-        .cpf(ownerDTO.cpf())
-        .email(ownerDTO.email())
-        .telefone(ownerDTO.telefone())
-        .endereco(
-            Address.builder()
-                .logradouro(ownerDTO.endereco().logradouro())
-                .bairro(ownerDTO.endereco().bairro())
-                .cidade(ownerDTO.endereco().cidade())
-                .estado(ownerDTO.endereco().estado())
-                .complemento(ownerDTO.endereco().complemento())
-                .cep(ownerDTO.endereco().cep())
-                .numero(ownerDTO.endereco().numero())
-                .build())
-        .build();
-  }
+  private Address address;
 }

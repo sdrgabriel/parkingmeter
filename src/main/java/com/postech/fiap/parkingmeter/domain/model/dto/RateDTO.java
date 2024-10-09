@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ParkingMeterArrecadacaoDTO {
+public class RateDTO {
 
-  private ParkingMeterDTO parquimetro;
-  private double totalArrecadado;
+  private double firstHour;
+  private double additionalHour;
 }

@@ -11,6 +11,7 @@ import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.data.domain.Page;
@@ -21,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @ImportAutoConfiguration(TransactionAutoConfiguration.class)
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 @Transactional
 public class VehicleServiceImpl implements VehicleService {
 
@@ -52,7 +53,7 @@ public class VehicleServiceImpl implements VehicleService {
     log.info("Create vehicle");
     Owner owner =
         ownerRepository
-            .findById(vehicleForm.owner_id())
+            .findById(vehicleForm.ownerId())
             .orElseThrow(() -> new VehicleException("Not found Vehicle", HttpStatus.NOT_FOUND));
 
     Vehicle vehicle =
@@ -62,6 +63,7 @@ public class VehicleServiceImpl implements VehicleService {
             .model(vehicleForm.model())
             .owner(owner)
             .build();
+
     return converterToDTO.toDto(vehicleRepository.save(vehicle));
   }
 

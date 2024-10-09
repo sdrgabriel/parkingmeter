@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class TotalVehicleOwnerDTO {
 
   private OwnerDTO owner;
-  private long totalVeiculo;
+  private long totalVehicles;
 }

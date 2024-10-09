@@ -1,8 +1,7 @@
 package com.postech.fiap.parkingmeter.domain.service;
 
 import com.postech.fiap.parkingmeter.domain.model.dto.*;
-import com.postech.fiap.parkingmeter.domain.model.dto.forms.ParkingMeterForm;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Address;
+import com.postech.fiap.parkingmeter.domain.model.dto.forms.parkingmeter.ParkingMeterForm;
 import com.postech.fiap.parkingmeter.infrastructure.exception.ParkingMeterException;
 import java.time.LocalDate;
 import org.springframework.data.domain.Page;
@@ -21,23 +20,20 @@ public interface ParkingMeterService {
 
   void deleteById(String id);
 
-  Address getAddressByCep(String cep);
-
-  Slice<ParkingMeterArrecadacaoDTO> getHighestEarningParkingMeter(
-      String dataInicio, String dataFim, Pageable pageable);
+  Slice<ParkingMeterCollectionDTO> getHighestEarningParkingMeter(
+      String startDate, String endDate, Pageable pageable);
 
   ParkingSpaceDTO getAvailableSpace(String id, LocalDate date);
-
-  TimesParkedDTO getTimesParked(String parkingMeterId, String licensePlate);
 
   TimesParkedDTO getTimesParkedWithDateRange(
       String parkingMeterId, String licensePlate, LocalDate begin, LocalDate end);
 
-  Page<ParkingMeterDTO> findAllByCityOrNeighborhood(String cidade, String bairro, Pageable pageable);
+  Page<ParkingMeterDTO> findAllByCityOrNeighborhood(
+      String city, String neighborhood, Pageable pageable);
 
-  AmountEarnedDTO getParkingMeterEarnedWithDataRange(
+  AmountEarnedDTO getParkingMeterEarningsWithDateRange(
       String parkingMeterId, LocalDate begin, LocalDate end);
 
-  Page<AmountEarnedByLocalityDTO> getParkingMeterEarnedWithDataRangeByLocality(
-      String cidade, String bairro, LocalDate begin, LocalDate end, Pageable pageable);
+  Page<AmountEarnedByLocalityDTO> getParkingMeterEarningsWithDateRangeByLocality(
+      String city, String neighborhood, LocalDate begin, LocalDate end, Pageable pageable);
 }

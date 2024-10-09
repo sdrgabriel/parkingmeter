@@ -10,9 +10,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ParkingMeterRepository extends MongoRepository<ParkingMeter, String> {
 
-  boolean existsByEndereco_Cep(String cep);
+  boolean existsByAddress_ZipCode(String zipCode);
 
   @Query(
-      " { '$and': [ {'$or': [{'endereco.cidade': ?0},{'null': ?0} ] }, {'$or': [{'endereco.bairro': ?1}, {'null': ?1} ]} ] } ")
-  Page<ParkingMeter> findAllByCidadeOrBairro(String cidade, String bairro, Pageable pageable);
+      "{ '$or': [ "
+          + "{ 'address.city': ?0, 'address.neighborhood': ?1 }, "
+          + "{ 'address.city': ?0 }, "
+          + "{ 'address.neighborhood': ?1 }, "
+          + "{ 'address.city': null, 'address.neighborhood': null } "
+          + "] }")
+  Page<ParkingMeter> findAllByCityAndOrNeighborhood(
+      String city, String neighborhood, Pageable pageable);
 }

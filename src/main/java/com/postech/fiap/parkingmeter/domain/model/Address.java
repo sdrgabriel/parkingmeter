@@ -2,6 +2,7 @@ package com.postech.fiap.parkingmeter.domain.model;
 
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
@@ -9,11 +10,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Builder
 public class Address {
 
-  private String logradouro;
-  private String bairro;
-  private String cidade;
-  private String estado;
-  private String cep;
-  private Integer numero;
-  private String complemento;
+  private String street;
+
+  private String neighborhood;
+
+  private String city;
+
+  private String state;
+
+  @Indexed(unique = true)
+  private String zipCode;
+
+  private String number;
+
+  private String complement;
 }

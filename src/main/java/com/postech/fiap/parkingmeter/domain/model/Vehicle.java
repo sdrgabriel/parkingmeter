@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Vehicle {
+
   @Id private String id;
 
   @Indexed(unique = true)

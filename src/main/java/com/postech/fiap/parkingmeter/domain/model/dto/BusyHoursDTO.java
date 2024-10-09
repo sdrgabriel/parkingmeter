@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BusyHoursDTO {
 
-  private ParkingMeterDTO parquimetro;
-  private Integer horarioMovimentado;
+  private ParkingMeterDTO parkingMeter;
+  private Integer operatedTime;
   private long totalTickets;
 }

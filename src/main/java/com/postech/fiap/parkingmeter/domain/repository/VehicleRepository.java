@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface VehicleRepository extends MongoRepository<Vehicle, String> {
 
   @Query(value = "{ 'owner._id': ?0 }", count = true)
-  long countByProprietarioCpf(String id);
+  long countByOwnerId(String id);
 }

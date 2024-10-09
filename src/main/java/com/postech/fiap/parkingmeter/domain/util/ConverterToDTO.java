@@ -1,13 +1,7 @@
 package com.postech.fiap.parkingmeter.domain.util;
 
-import com.postech.fiap.parkingmeter.domain.model.Owner;
-import com.postech.fiap.parkingmeter.domain.model.ParkingMeter;
-import com.postech.fiap.parkingmeter.domain.model.Ticket;
-import com.postech.fiap.parkingmeter.domain.model.Vehicle;
-import com.postech.fiap.parkingmeter.domain.model.dto.OwnerDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.ParkingMeterDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.TicketDTO;
-import com.postech.fiap.parkingmeter.domain.model.dto.VehicleDTO;
+import com.postech.fiap.parkingmeter.domain.model.*;
+import com.postech.fiap.parkingmeter.domain.model.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
@@ -32,5 +26,9 @@ public class ConverterToDTO {
 
   public VehicleDTO toDto(final Vehicle model) {
     return modelMapper.map(model, VehicleDTO.class);
+  }
+
+  public AddressDTO toDto(final Address model) {
+    return modelMapper.map(model, AddressDTO.class);
   }
 }

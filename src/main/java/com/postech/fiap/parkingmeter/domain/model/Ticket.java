@@ -23,27 +23,27 @@ public class Ticket {
 
   @Valid
   @NotNull
-  @Field("valor_total_cobrado")
-  private double valorTotalCobrado;
+  @Field("total_amount_charged")
+  private double totalAmountCharged;
 
   @Valid
   @NotNull
   @Indexed
-  @Field("horario_inicio")
-  private LocalDateTime horarioInicio;
+  @Field("start_time")
+  private LocalDateTime startTime;
 
   @Valid
   @Indexed
-  @Field("horario_fim")
-  private LocalDateTime horarioFim;
+  @Field("end_time")
+  private LocalDateTime endTime;
 
   @Valid
   @NotNull
   @Indexed
-  @Field("status_pagamento")
-  private PaymentStatusEnum statusPagamento;
+  @Field("payment_status")
+  private PaymentStatusEnum paymentStatus;
 
-  @Valid @NotNull @Indexed private ParkingMeter parquimetro;
+  @Valid @NotNull @Indexed private ParkingMeter parkingMeter;
 
-  @Valid @NotNull @Indexed private Vehicle veiculo;
+  @Valid @NotNull @Indexed private Vehicle vehicle;
 }

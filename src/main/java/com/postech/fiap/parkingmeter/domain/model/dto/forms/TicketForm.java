@@ -8,5 +8,5 @@ import jakarta.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TicketForm(
-    @JsonAlias("vehicle_id") @Valid @NotNull String vehicle_id,
-    @JsonAlias("parking_meter_id") @Valid @NotNull String parking_meter_id) {}
+    @JsonAlias("vehicle_id") @Valid @NotNull String vehicleId,
+    @JsonAlias("parking_meter_id") @Valid @NotNull String parkingMeterId) {}

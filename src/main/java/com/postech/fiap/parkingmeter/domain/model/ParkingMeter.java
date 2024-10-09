@@ -1,8 +1,6 @@
 package com.postech.fiap.parkingmeter.domain.model;
 
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Address;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.OperatingHours;
-import com.postech.fiap.parkingmeter.domain.model.parkingmeter.Tarifa;
+import com.postech.fiap.parkingmeter.domain.model.dto.forms.parkingmeter.RateParkingForm;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -28,17 +26,17 @@ public class ParkingMeter {
   @Valid
   @NotNull
   @Indexed
-  @Field("horario_funcionamento")
-  private OperatingHours horarioFuncionamento;
+  @Field("operating_hours")
+  private OperationHours operatingHours;
 
-  @Valid private Tarifa tarifa;
+  @Valid private Rate rate;
 
   @Min(value = 1)
   @Indexed
-  @Field("vagas_disponiveis")
-  private int vagasDisponiveis;
+  @Field("available_spaces")
+  private int availableSpaces;
 
-  @Valid @NotNull @Indexed private Address endereco;
+  @Valid @NotNull @Indexed private Address address;
 
   @Version private Long version;
 }

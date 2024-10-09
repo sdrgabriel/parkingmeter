@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -13,45 +12,6 @@
     <version>00.00.01</version>
     <name>parking meter</name>
     <description>Project Parking Meter - Pos Tech FIAP</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer>
-            <id>dev1</id>
-            <name>Luiz Romão</name>
-            <email>luizromao7@outlook.com</email>
-            <organization>FIAP</organization>
-            <organizationUrl>https://www.fiap.com.br</organizationUrl>
-            <roles>
-                <role>Developer</role>
-                <role>Contributor</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>dev2</id>
-            <name>Gabriel Ricardo dos santos</name>
-            <email>gabrieljenn.gr@gmail.com</email>
-            <organization>FIAP</organization>
-            <organizationUrl>https://www.fiap.com.br</organizationUrl>
-            <roles>
-                <role>Developer</role>
-                <role>Contributor</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>dev3</id>
-            <name>Edson Silva</name>
-            <email>gabrieljenn.gr@gmail.com</email>
-            <organization>FIAP</organization>
-            <organizationUrl>https://www.fiap.com.br</organizationUrl>
-            <roles>
-                <role>Developer</role>
-                <role>Contributor</role>
-            </roles>
-        </developer>
-    </developers>
     <properties>
         <java.version>17</java.version>
     </properties>
@@ -72,7 +32,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -127,5 +86,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
