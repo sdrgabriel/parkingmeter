@@ -8,6 +8,7 @@ import com.postech.fiap.parkingmeter.domain.repository.OwnerRepository;
 import com.postech.fiap.parkingmeter.domain.repository.VehicleRepository;
 import com.postech.fiap.parkingmeter.domain.service.VehicleService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
+import com.postech.fiap.parkingmeter.infrastructure.exception.OwnerException;
 import com.postech.fiap.parkingmeter.infrastructure.exception.VehicleException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,7 @@ public class VehicleServiceImpl implements VehicleService {
     Owner owner =
         ownerRepository
             .findById(vehicleForm.ownerId())
-            .orElseThrow(() -> new VehicleException("Not found Vehicle", HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new OwnerException("Not found Owner", HttpStatus.NOT_FOUND));
 
     Vehicle vehicle =
         Vehicle.builder()
@@ -75,6 +76,10 @@ public class VehicleServiceImpl implements VehicleService {
             .findById(id)
             .orElseThrow(() -> new VehicleException("Not found Vehicle", HttpStatus.NOT_FOUND));
 
+    vehicle.setOwner(
+        ownerRepository
+            .findById(vehicleForm.ownerId())
+            .orElseThrow(() -> new OwnerException("Not found Owner", HttpStatus.NOT_FOUND)));
     vehicle.setColor(vehicleForm.color());
     vehicle.setLicensePlate(vehicleForm.licensePlate());
     vehicle.setModel(vehicleForm.model());

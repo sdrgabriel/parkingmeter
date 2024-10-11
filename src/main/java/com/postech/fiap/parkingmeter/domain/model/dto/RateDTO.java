@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class RateDTO {
 
   private double firstHour;
-  private double additionalHour;
+  private double additionalHours;
 }

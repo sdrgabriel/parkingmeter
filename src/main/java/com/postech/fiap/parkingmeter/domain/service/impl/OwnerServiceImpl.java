@@ -9,11 +9,13 @@ import com.postech.fiap.parkingmeter.domain.repository.OwnerRepository;
 import com.postech.fiap.parkingmeter.domain.repository.VehicleRepository;
 import com.postech.fiap.parkingmeter.domain.service.OwnerService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
+import com.postech.fiap.parkingmeter.infrastructure.exception.OwnerException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +41,7 @@ public class OwnerServiceImpl implements OwnerService {
     return ownerRepository
         .findById(id)
         .map(converterToDTO::toDto)
-        .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
+        .orElseThrow(() -> new OwnerException("Owner not found", HttpStatus.NOT_FOUND));
   }
 
   @Override
@@ -52,7 +54,7 @@ public class OwnerServiceImpl implements OwnerService {
     Owner owner =
         ownerRepository
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
+            .orElseThrow(() -> new OwnerException("Owner not found", HttpStatus.NOT_FOUND));
 
     owner.setPhone(ownerForm.phone());
     owner.setName(ownerForm.name());
@@ -66,7 +68,7 @@ public class OwnerServiceImpl implements OwnerService {
   @Override
   public void deleteById(String id) {
     if (!ownerRepository.existsById(id)) {
-      throw new IllegalArgumentException("Owner not found");
+      throw new OwnerException("Owner not found", HttpStatus.NOT_FOUND);
     }
     ownerRepository.deleteById(id);
   }

@@ -10,5 +10,5 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Rate {
 
   private double firstHour;
-  private double additionalHour;
+  private double additionalHours;
 }
