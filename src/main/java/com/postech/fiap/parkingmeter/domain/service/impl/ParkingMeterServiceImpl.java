@@ -89,7 +89,15 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   @Override
   public ParkingMeterDTO updateById(String id, ParkingMeterForm parkingMeterForm) {
     log.info("Update Parking Meter");
-    this.getParkingMeter(id);
+    var parkingMeter = this.getParkingMeter(id);
+    boolean zipCodeExists = parkingMeterRepository.existsByAddress_ZipCode(parkingMeterForm.address().zipCode());
+    if (zipCodeExists && !parkingMeter.getAddress().getZipCode().equals(parkingMeterForm.address().zipCode())){
+      throw new ParkingMeterException(
+              "Parking meter with ZIP code "
+                      + parkingMeterForm.address().zipCode()
+                      + " already exists.",
+              HttpStatus.CONFLICT);
+    }
     var updatedParkingMeter = populateParkingMeter(id, parkingMeterForm);
     return this.converterToDTO.toDto(this.parkingMeterRepository.save(updatedParkingMeter));
   }
@@ -119,7 +127,16 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
                 .as("totalCollected"),
             Aggregation.sort(Sort.by(Sort.Direction.DESC, "totalCollected")),
             Aggregation.skip(pageable.getOffset()),
-            Aggregation.limit(pageable.getPageSize()));
+            Aggregation.limit(pageable.getPageSize()),
+                Aggregation.project()
+                        .and("_id").as(PARKING_METER_ID)
+                        .and("parkingMeter.operating_hours").as("parkingMeter.operatingHours")
+                        .and("parkingMeter.rate").as("parkingMeter.rate")
+                        .and("parkingMeter.available_spaces").as("parkingMeter.availableSpaces")
+                .and("parkingMeter.address").as("parkingMeter.address")
+                .and("parkingMeter.version").as("parkingMeter.version")
+                .and("totalCollected").as("totalCollected")
+        );
 
     AggregationResults<ParkingMeterCollectionDTO> results =
         mongoTemplate.aggregate(aggregation, "ticket", ParkingMeterCollectionDTO.class);
@@ -209,6 +226,15 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
 
     getParkingMeter(parkingMeterId);
 
+    if (endDate == null) {
+      endDate = LocalDate.now();
+    }
+
+    if (startDate.isAfter(endDate)) {
+      throw new ParkingMeterException(
+              "Start date is greater than end date", HttpStatus.BAD_REQUEST);
+    }
+
     MatchOperation matchParkingMeter = Aggregation.match(Criteria.where("_id").is(parkingMeterId));
 
     LookupOperation lookupOperation =
@@ -222,7 +248,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
                 .orOperator(
                     Criteria.where(INDEX).is(null),
                     Criteria.where("tickets.vehicle.license_plate").is(licensePlate),
-                    Criteria.where("tickets.start_time").gte(startDate).lte(endDate)));
+                    Criteria.where("tickets.start_time").gte(startDate.atStartOfDay()).lte(endDate.plusDays(1).atStartOfDay())));
 
     GroupOperation groupTickets =
         Aggregation.group("tickets.vehicle._id").first(INDEX).as("idx").count().as("times_parked");
@@ -261,9 +287,9 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
   @Transactional(readOnly = true)
   public Page<ParkingMeterDTO> findAllByCityOrNeighborhood(
       String city, String neighborhood, Pageable pageable) {
-    if (city == null && neighborhood == null) {
+    if (ObjectUtils.isEmpty(city) && ObjectUtils.isEmpty(neighborhood)) {
       throw new ParkingMeterException(
-          "At least one filter parameter must be entered", HttpStatus.BAD_REQUEST);
+              "At least one filter parameter city or neighborhood must be entered", HttpStatus.BAD_REQUEST);
     }
 
     return parkingMeterRepository
@@ -303,7 +329,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
                         .lt(endDate.plusDays(1))));
 
     GroupOperation groupTickets =
-        Aggregation.group("_id").sum("tickets.total_charged_amount").as("earned");
+        Aggregation.group("_id").sum("tickets.total_amount_charged").as("earned");
 
     ProjectionOperation projectFields = Aggregation.project("_id", "earned");
 
@@ -340,7 +366,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
       String city, String neighborhood, LocalDate startDate, LocalDate endDate, Pageable pageable) {
     if (ObjectUtils.isEmpty(city) && ObjectUtils.isEmpty(neighborhood)) {
       throw new ParkingMeterException(
-          "At least one filter parameter must be entered", HttpStatus.BAD_REQUEST);
+          "At least one filter parameter city or neighborhood must be entered", HttpStatus.BAD_REQUEST);
     }
 
     if (endDate == null) {
@@ -382,7 +408,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
         Aggregation.group("_id")
             .first("address")
             .as("address")
-            .sum("tickets.total_charged_amount")
+            .sum("tickets.total_amount_charged")
             .as("earned");
 
     ProjectionOperation projectFields =
@@ -429,9 +455,9 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
             .build(),
         Rate.builder()
             .firstHour(parkingMeterForm.rate().firstHour())
-            .additionalHour(parkingMeterForm.rate().additionalHours())
+            .additionalHours(parkingMeterForm.rate().additionalHours())
             .build(),
-        parkingMeterForm.availableSpots(),
+        parkingMeterForm.availableSpaces(),
         Address.builder()
             .complement(parkingMeterForm.address().complement())
             .street(parkingMeterForm.address().street())

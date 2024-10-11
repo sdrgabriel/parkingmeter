@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-public class OwnerException extends Exception {
+public class OwnerException extends RuntimeException {
 
   private final HttpStatus status;
 

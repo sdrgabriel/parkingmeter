@@ -72,12 +72,20 @@ public class TicketServiceImpl implements TicketService {
 
       ParkingMeter parkingMeter = buildParkingMeter(parkingMeterDTO);
 
+      var operatingHours = parkingMeter.getOperatingHours();
+      LocalTime lt = LocalTime.parse(operatingHours.getEnd());
+      LocalTime ltNow = LocalTime.now();
+
+      if (ltNow.isAfter(lt)) {
+        throw new TicketException("Parking meter closed, opening hours from %s to %s".formatted(operatingHours.getStart(), operatingHours.getEnd()), HttpStatus.BAD_REQUEST);
+      }
+
       Optional<Ticket> pendingTicketByVehicleId =
           this.ticketRepository.findPendingTicketByVehicleId(ticketForm.vehicleId());
 
       if (pendingTicketByVehicleId != null && pendingTicketByVehicleId.isPresent()) {
         throw new TicketException(
-            "O veículo já está estacionado em um parquímetro", HttpStatus.BAD_REQUEST);
+            "The vehicle is already parked at a parking meter", HttpStatus.BAD_REQUEST);
       }
 
       List<Ticket> pendingTicketsByParkingMeterId =
@@ -87,7 +95,7 @@ public class TicketServiceImpl implements TicketService {
 
       if (pendingTicketCount >= parkingMeter.getAvailableSpaces()) {
         throw new TicketException(
-            "Este parquímetro não tem vagas disponíveis", HttpStatus.BAD_REQUEST);
+            "This parking meter has no available spaces", HttpStatus.BAD_REQUEST);
       }
 
       return converterToDTO.toDto(ticketRepository.save(buildTicket(vehicle, parkingMeter)));
@@ -101,12 +109,12 @@ public class TicketServiceImpl implements TicketService {
     Ticket ticket =
         this.ticketRepository
             .findById(id)
-            .orElseThrow(() -> new TicketException("Ticket não encontrado", HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new TicketException("Ticket not found", HttpStatus.NOT_FOUND));
 
     var hasCanceled = ticket.getPaymentStatus() == PaymentStatusEnum.CANCELLED;
     var hasCharged = ticket.getPaymentStatus() == PaymentStatusEnum.PAID;
     if (hasCanceled || hasCharged) {
-      throw new TicketException("Não foi possivel atualizar este ticket", HttpStatus.BAD_REQUEST);
+      throw new TicketException("Unable to update this ticket", HttpStatus.BAD_REQUEST);
     }
 
     var hourNow = LocalDateTime.now();
@@ -115,7 +123,7 @@ public class TicketServiceImpl implements TicketService {
             ticket.getStartTime(),
             hourNow,
             ticket.getParkingMeter().getRate().getFirstHour(),
-            ticket.getParkingMeter().getRate().getAdditionalHour());
+            ticket.getParkingMeter().getRate().getAdditionalHours());
 
     ticket.setTotalAmountCharged(totalAmountCharged);
     ticket.setEndTime(hourNow);
@@ -131,10 +139,10 @@ public class TicketServiceImpl implements TicketService {
     Ticket ticket =
         this.ticketRepository
             .findById(id)
-            .orElseThrow(() -> new TicketException("Ticket não encontrado", HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new TicketException("Ticket not found", HttpStatus.NOT_FOUND));
 
     if (ticket.getPaymentStatus() == PaymentStatusEnum.CANCELLED) {
-      throw new TicketException("O ticket já foi cancelado", HttpStatus.BAD_REQUEST);
+      throw new TicketException("The ticket has already been canceled", HttpStatus.BAD_REQUEST);
     }
 
     LocalDateTime hourNow = LocalDateTime.now();
@@ -144,7 +152,7 @@ public class TicketServiceImpl implements TicketService {
     final int TIME_LIMIT_MINUTES = 5;
     if (minutesDiff >= TIME_LIMIT_MINUTES) {
       throw new TicketException(
-          "O ticket não pode ser cancelado, tempo de tolerância atingido", HttpStatus.BAD_REQUEST);
+          "Ticket cannot be cancelled, grace period reached", HttpStatus.BAD_REQUEST);
     }
 
     ticket.setPaymentStatus(PaymentStatusEnum.CANCELLED);
@@ -168,7 +176,7 @@ public class TicketServiceImpl implements TicketService {
 
     if (tickets.isEmpty()) {
       throw new VehicleException(
-          "Nenhum ticket encontrado para o veículo com a placa: " + licensePlate,
+          "No ticket found for vehicle with license plate: " + licensePlate,
           HttpStatus.NOT_FOUND);
     }
 
@@ -185,6 +193,10 @@ public class TicketServiceImpl implements TicketService {
   @Transactional(readOnly = true)
   public Page<TicketDTO> findTicketsByDateRange(
       LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+
+    if (startDate.isAfter(endDate)) {
+      throw new TicketException("Start date is greater than end date", HttpStatus.BAD_REQUEST);
+    }
     return ticketRepository
         .findByStartTimeBetween(startDate, endDate, pageable)
         .map(converterToDTO::toDto);
@@ -238,6 +250,7 @@ public class TicketServiceImpl implements TicketService {
 
     Owner owner =
         Owner.builder()
+                .id(vehicleDTO.getOwner().getId())
             .cpf(vehicleDTO.getOwner().getCpf())
             .address(address)
             .email(vehicleDTO.getOwner().getEmail())
@@ -264,7 +277,7 @@ public class TicketServiceImpl implements TicketService {
                 .build())
         .rate(
             Rate.builder()
-                .additionalHour(parkingMeterDTO.getRate().getAdditionalHour())
+                .additionalHours(parkingMeterDTO.getRate().getAdditionalHours())
                 .firstHour(parkingMeterDTO.getRate().getFirstHour())
                 .build())
         .availableSpaces(parkingMeterDTO.getAvailableSpaces())
@@ -285,7 +298,7 @@ public class TicketServiceImpl implements TicketService {
   private Ticket buildTicket(Vehicle vehicle, ParkingMeter parkingMeter) {
     return Ticket.builder()
         .totalAmountCharged(0.00)
-        .startTime(ZonedDateTime.now(ZoneId.of("UTC")).toLocalDateTime())
+        .startTime(LocalDateTime.now())
         .endTime(null)
         .paymentStatus(PaymentStatusEnum.PENDING)
         .parkingMeter(parkingMeter)
