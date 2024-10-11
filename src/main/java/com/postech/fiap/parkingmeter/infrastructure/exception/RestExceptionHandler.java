@@ -1,5 +1,7 @@
 package com.postech.fiap.parkingmeter.infrastructure.exception;
 
+import com.mongodb.MongoWriteException;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -45,13 +48,16 @@ public class RestExceptionHandler {
   }
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-  public ResponseEntity<String> httpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
+  public ResponseEntity<String> httpRequestMethodNotSupportedException(
+      HttpRequestMethodNotSupportedException ex) {
     return ResponseEntity.status(ex.getStatusCode()).body(ex.getMessage());
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<String> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The request body is malformed or contains invalid data.");
+  public ResponseEntity<String> handleHttpMessageNotReadableException(
+      HttpMessageNotReadableException ex) {
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body("The request body is malformed or contains invalid data.");
   }
 
   @ExceptionHandler(VehicleException.class)
@@ -71,13 +77,34 @@ public class RestExceptionHandler {
 
   @ExceptionHandler(MissingServletRequestParameterException.class)
   public ResponseEntity<String> missingServletRequestParameterException(
-          MissingServletRequestParameterException ex) {
+      MissingServletRequestParameterException ex) {
     return ResponseEntity.status(ex.getStatusCode()).body(ex.getMessage());
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-  public ResponseEntity<String> methodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
-    String error = "The value of %s you entered is invalid for the parameter %s.".formatted(ex.getValue(), ex.getName());
+  public ResponseEntity<String> methodArgumentTypeMismatchException(
+      MethodArgumentTypeMismatchException ex) {
+    String error =
+        "The value of %s you entered is invalid for the parameter %s."
+            .formatted(ex.getValue(), ex.getName());
     return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MongoWriteException.class)
+  public ResponseEntity<String> mongoWriteException(MongoWriteException ex) {
+    return ResponseEntity.badRequest().body(ex.getError().getMessage());
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<String> noResourceFoundException(NoResourceFoundException ex) {
+    return ResponseEntity.status(ex.getStatusCode()).body(ex.getMessage());
+  }
+
+  @ExceptionHandler(DateTimeParseException.class)
+  public ResponseEntity<String> dateTimeParseException(DateTimeParseException ex) {
+    return ResponseEntity.badRequest()
+        .body(
+            "The value of %s you entered is invalid for the parameter yyyy-mm-ddTHH:MM:SSZ."
+                .formatted(ex.getParsedString()));
   }
 }

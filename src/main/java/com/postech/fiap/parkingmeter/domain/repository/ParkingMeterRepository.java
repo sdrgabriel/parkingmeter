@@ -12,13 +12,7 @@ public interface ParkingMeterRepository extends MongoRepository<ParkingMeter, St
 
   boolean existsByAddress_ZipCode(String zipCode);
 
-  @Query(
-      "{ '$or': [ "
-          + "{ 'address.city': ?0, 'address.neighborhood': ?1 }, "
-          + "{ 'address.city': ?0 }, "
-          + "{ 'address.neighborhood': ?1 }, "
-          + "{ 'address.city': null, 'address.neighborhood': null } "
-          + "] }")
+  @Query(" { '$and': [ {'$or': [{'address.city': ?0},{'null': ?0} ] }, {'$or': [{'address.neighborhood': ?1}, {'null': ?1} ]} ] } ")
   Page<ParkingMeter> findAllByCityAndOrNeighborhood(
       String city, String neighborhood, Pageable pageable);
 }

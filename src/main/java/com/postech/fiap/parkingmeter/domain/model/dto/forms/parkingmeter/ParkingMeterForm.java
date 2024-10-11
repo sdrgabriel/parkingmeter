@@ -8,5 +8,5 @@ import jakarta.validation.constraints.NotNull;
 public record ParkingMeterForm(
     @JsonAlias("operating_hours") @Valid @NotNull OperatingHoursParkingForm operatingHours,
     @Valid @NotNull RateParkingForm rate,
-    @JsonAlias("available_spots") @Min(value = 1) int availableSpots,
+    @JsonAlias("available_spots") @Min(value = 1) int availableSpaces,
     @Valid @NotNull AddressParkingForm address) {}

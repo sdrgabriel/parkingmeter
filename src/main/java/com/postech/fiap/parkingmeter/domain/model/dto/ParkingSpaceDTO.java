@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class ParkingSpaceDTO {
 
   private LocalDateTime date;
-  private AddressDTO addressDTO;
+  private AddressDTO address;
   private Integer spaces;
   private Integer available;
 }
