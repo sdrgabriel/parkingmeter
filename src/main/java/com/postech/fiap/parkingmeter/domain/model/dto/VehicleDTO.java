@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @AllArgsConstructor
@@ -12,8 +13,13 @@ import lombok.NoArgsConstructor;
 public class VehicleDTO {
 
   private String id;
+
+  @Field("license_plate")
   private String licensePlate;
+
   private String model;
+
   private String color;
+
   private OwnerDTO owner;
 }

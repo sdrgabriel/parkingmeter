@@ -14,6 +14,6 @@ public class AmountEarnedDTO {
 
   private LocalDateTime date;
   private String id;
-  private AddressDTO addressDTO;
+  private AddressDTO address;
   private Double earned;
 }

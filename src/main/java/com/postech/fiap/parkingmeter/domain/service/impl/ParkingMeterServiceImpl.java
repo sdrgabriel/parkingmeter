@@ -191,7 +191,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
     ParkingSpaceDTO parkingSpaceDTO = new ParkingSpaceDTO();
     if (listResult.isEmpty()) {
       parkingSpaceDTO.setDate(LocalDateTime.now());
-      parkingSpaceDTO.setAddressDTO(converterToDTO.toDto(parkingMeter.getAddress()));
+      parkingSpaceDTO.setAddress(converterToDTO.toDto(parkingMeter.getAddress()));
       parkingSpaceDTO.setSpaces(parkingMeter.getAvailableSpaces());
       parkingSpaceDTO.setAvailable(0);
     } else {
@@ -324,7 +324,7 @@ public class ParkingMeterServiceImpl implements ParkingMeterService {
     AmountEarnedDTO amountEarnedDTO =
         AmountEarnedDTO.builder()
             .id(parkingMeter.getId())
-            .addressDTO(converterToDTO.toDto(parkingMeter.getAddress()))
+            .address(converterToDTO.toDto(parkingMeter.getAddress()))
             .date(LocalDateTime.now())
             .earned(0.0)
             .build();

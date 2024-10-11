@@ -9,11 +9,13 @@ import com.postech.fiap.parkingmeter.domain.repository.OwnerRepository;
 import com.postech.fiap.parkingmeter.domain.repository.VehicleRepository;
 import com.postech.fiap.parkingmeter.domain.service.OwnerService;
 import com.postech.fiap.parkingmeter.domain.util.ConverterToDTO;
+import com.postech.fiap.parkingmeter.infrastructure.exception.OwnerException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,10 +38,14 @@ public class OwnerServiceImpl implements OwnerService {
   @Override
   @Transactional(readOnly = true)
   public OwnerDTO getById(String id) {
-    return ownerRepository
-        .findById(id)
-        .map(converterToDTO::toDto)
-        .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
+    try {
+      return ownerRepository
+          .findById(id)
+          .map(converterToDTO::toDto)
+          .orElseThrow(() -> new OwnerException("Owner not found", HttpStatus.NOT_FOUND));
+    } catch (OwnerException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -49,26 +55,34 @@ public class OwnerServiceImpl implements OwnerService {
 
   @Override
   public OwnerDTO updateById(String id, OwnerForm ownerForm) {
-    Owner owner =
-        ownerRepository
-            .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Owner not found"));
+    try {
+      Owner owner =
+          ownerRepository
+              .findById(id)
+              .orElseThrow(() -> new OwnerException("Owner not found", HttpStatus.NOT_FOUND));
 
-    owner.setPhone(ownerForm.phone());
-    owner.setName(ownerForm.name());
-    owner.setCpf(ownerForm.cpf());
-    owner.setEmail(ownerForm.email());
-    owner.setAddress(buildAddress(ownerForm));
+      owner.setPhone(ownerForm.phone());
+      owner.setName(ownerForm.name());
+      owner.setCpf(ownerForm.cpf());
+      owner.setEmail(ownerForm.email());
+      owner.setAddress(buildAddress(ownerForm));
 
-    return converterToDTO.toDto(ownerRepository.save(owner));
+      return converterToDTO.toDto(ownerRepository.save(owner));
+    } catch (OwnerException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   public void deleteById(String id) {
-    if (!ownerRepository.existsById(id)) {
-      throw new IllegalArgumentException("Owner not found");
+    try {
+      if (!ownerRepository.existsById(id)) {
+        throw new OwnerException("Owner not found", HttpStatus.NOT_FOUND);
+      }
+      ownerRepository.deleteById(id);
+    } catch (OwnerException e) {
+      throw new RuntimeException(e);
     }
-    ownerRepository.deleteById(id);
   }
 
   @Override
