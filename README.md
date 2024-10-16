@@ -13,7 +13,7 @@ ALUNOS 5ADJT
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.10-brightgreen?style=flat&logo=spring&logoColor=white)
 ![Java 17](https://img.shields.io/badge/Java-17-blue?style=flat&logo=java&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.8.5-orange?style=flat&logo=apachemaven&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MySQL-8.0-blue?style=flat&logo=mysql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/-MongoDB-13aa52?style=flat&logo=mysql&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-3.0-brightgreen?style=flat&logo=swagger&logoColor=white)
 
 ## Sumário
